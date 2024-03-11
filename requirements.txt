@@ -1,7 +1,8 @@
 jieba>=0.39
 loguru
-transformers>=4.6.0
-datasets
 tqdm
-scikit-learn
 pandas
+langchain~=0.1.11
+langchain-community~=0.0.27
+langchain-openai~=0.0.8
+langchain=experimental~=0.0.53

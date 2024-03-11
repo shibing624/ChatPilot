@@ -4,7 +4,7 @@ authors:
   - family-names: Xu
     given-names: Ming
     orcid: https://orcid.org/0000-0003-3402-7159
-title: "ChatAgent: build agent toolkit"
+title: "ChatPilot: build agent toolkit"
 version: 0.0.1
 date-released: 2024-03-10
-url: "https://github.com/shibing624/chatagent"
+url: "https://github.com/shibing624/ChatPilot"

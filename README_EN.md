@@ -1,26 +1,26 @@
-[**🇨🇳中文**](https://github.com/shibing624/chatagent/blob/main/README.md) | [**🌐English**](https://github.com/shibing624/chatagent/blob/main/README_EN.md) | [**📖文档/Docs**](https://github.com/shibing624/chatagent/wiki) | [**🤖模型/Models**](https://huggingface.co/shibing624) 
+[**🇨🇳中文**](https://github.com/shibing624/ChatPilot/blob/main/README.md) | [**🌐English**](https://github.com/shibing624/ChatPilot/blob/main/README_EN.md) | [**📖文档/Docs**](https://github.com/shibing624/ChatPilot/wiki) | [**🤖模型/Models**](https://huggingface.co/shibing624) 
 
 <div align="center">
-  <a href="https://github.com/shibing624/chatagent">
-    <img src="https://github.com/shibing624/chatagent/blob/main/docs/logo.png" height="150" alt="Logo">
+  <a href="https://github.com/shibing624/ChatPilot">
+    <img src="https://github.com/shibing624/ChatPilot/blob/main/docs/logo.png" height="150" alt="Logo">
   </a>
 </div>
 
 -----------------
 
-# chatagent: chat agent
-[![PyPI version](https://badge.fury.io/py/chatagent.svg)](https://badge.fury.io/py/chatagent)
-[![Downloads](https://static.pepy.tech/badge/chatagent)](https://pepy.tech/project/chatagent)
+# ChatPilot: chat agent
+[![PyPI version](https://badge.fury.io/py/ChatPilot.svg)](https://badge.fury.io/py/ChatPilot)
+[![Downloads](https://static.pepy.tech/badge/ChatPilot)](https://pepy.tech/project/ChatPilot)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![License Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![python_version](https://img.shields.io/badge/Python-3.5%2B-green.svg)](requirements.txt)
-[![GitHub issues](https://img.shields.io/github/issues/shibing624/chatagent.svg)](https://github.com/shibing624/chatagent/issues)
+[![GitHub issues](https://img.shields.io/github/issues/shibing624/ChatPilot.svg)](https://github.com/shibing624/ChatPilot/issues)
 [![Wechat Group](https://img.shields.io/badge/wechat-group-green.svg?logo=wechat)](#Contact)
 
 
-**chatagent**: Text to Vector, Get Sentence Embeddings. 文本向量化，把文本(包括词、句子、段落)表征为向量矩阵。
+**ChatPilot**: Text to Vector, Get Sentence Embeddings. 文本向量化，把文本(包括词、句子、段落)表征为向量矩阵。
 
-**chatagent**实现了Word2Vec、RankBM25、BERT、Sentence-BERT、CoSENT等多种文本表征、文本相似度计算模型，并在文本语义匹配（相似度计算）任务上比较了各模型的效果。
+**ChatPilot**实现了Word2Vec、RankBM25、BERT、Sentence-BERT、CoSENT等多种文本表征、文本相似度计算模型，并在文本语义匹配（相似度计算）任务上比较了各模型的效果。
 
 ## Features
 ### Agent
@@ -32,20 +32,20 @@
 
 ## Demo
 
-Official Demo: https://www.chatagent.com/product/short_text_sim/
+Official Demo: https://www.ChatPilot.com/product/short_text_sim/
 
-HuggingFace Demo: https://huggingface.co/spaces/shibing624/chatagent
+HuggingFace Demo: https://huggingface.co/spaces/shibing624/ChatPilot
 
-![](https://github.com/shibing624/chatagent/blob/main/docs/hf.png)
+![](https://github.com/shibing624/ChatPilot/blob/main/docs/hf.png)
 
-run example: [examples/gradio_demo.py](https://github.com/shibing624/chatagent/blob/main/examples/gradio_demo.py) to see the demo:
+run example: [examples/gradio_demo.py](https://github.com/shibing624/ChatPilot/blob/main/examples/gradio_demo.py) to see the demo:
 ```shell
 python examples/gradio_demo.py
 ```
 
 ## Install
 ```shell
-pip install -U chatagent
+pip install -U ChatPilot
 ```
 
 or
@@ -53,8 +53,8 @@ or
 ```shell
 pip install -r requirements.txt
 
-git clone https://github.com/shibing624/chatagent.git
-cd chatagent
+git clone https://github.com/shibing624/ChatPilot.git
+cd ChatPilot
 pip install --no-deps .
 ```
 
@@ -67,7 +67,7 @@ pip install --no-deps .
 
 - 启动服务：
 
-example: [examples/fastapi_server_demo.py](https://github.com/shibing624/chatagent/blob/main/examples/fastapi_server_demo.py)
+example: [examples/fastapi_server_demo.py](https://github.com/shibing624/ChatPilot/blob/main/examples/fastapi_server_demo.py)
 ```shell
 cd examples
 python fastapi_server_demo.py
@@ -84,7 +84,7 @@ curl -X 'GET' \
 
 ## Contact
 
-- Issue(建议)：[![GitHub issues](https://img.shields.io/github/issues/shibing624/chatagent.svg)](https://github.com/shibing624/chatagent/issues)
+- Issue(建议)：[![GitHub issues](https://img.shields.io/github/issues/shibing624/ChatPilot.svg)](https://github.com/shibing624/ChatPilot/issues)
 - 邮件我：xuming: xuming624@qq.com
 - 微信我：加我*微信号：xuming624, 备注：姓名-公司-NLP* 进NLP交流群。
 
@@ -93,29 +93,29 @@ curl -X 'GET' \
 
 ## Citation
 
-如果你在研究中使用了chatagent，请按如下格式引用：
+如果你在研究中使用了ChatPilot，请按如下格式引用：
 
 APA:
 ```latex
-Xu, M. chatagent: LLM agent toolkit (Version 0.0.2) [Computer software]. https://github.com/shibing624/chatagent
+Xu, M. ChatPilot: LLM agent toolkit (Version 0.0.2) [Computer software]. https://github.com/shibing624/ChatPilot
 ```
 
 BibTeX:
 ```latex
-@misc{chatagent,
+@misc{ChatPilot,
   author = {Ming Xu},
-  title = {chatagent: llm agent},
+  title = {ChatPilot: llm agent},
   year = {2024},
   publisher = {GitHub},
   journal = {GitHub repository},
-  howpublished = {\url{https://github.com/shibing624/chatagent}},
+  howpublished = {\url{https://github.com/shibing624/ChatPilot}},
 }
 ```
 
 ## License
 
 
-授权协议为 [The Apache License 2.0](LICENSE)，可免费用做商业用途。请在产品说明中附加chatagent的链接和授权协议。
+授权协议为 [The Apache License 2.0](LICENSE)，可免费用做商业用途。请在产品说明中附加ChatPilot的链接和授权协议。
 
 
 ## Contribute
