@@ -36,7 +36,8 @@ class ChatAgent:
             verbose: bool = True,
             max_iterations: int = 5,
             max_execution_time: int = 60,
-            temperature: float = 0.7
+            temperature: float = 0.7,
+            num_memory_turns: int = 5,
     ):
         if not OPENAI_API_KEY:
             raise Exception("Missing `OPENAI_API_KEY` environment variable.")
@@ -78,8 +79,8 @@ class ChatAgent:
         llm_with_tools = self.llm.bind_tools(tools)
 
         # define agent
-        MEMORY_KEY = "chat_history"
         self.chat_history = []
+        self.num_memory_turns = num_memory_turns
         current_date = datetime.now().strftime("%Y-%m-%d")
         prompt = ChatPromptTemplate.from_messages(
             [
@@ -87,7 +88,7 @@ class ChatAgent:
                     "system",
                     SYSTEM_PROMPT.format(current_date=current_date),
                 ),
-                MessagesPlaceholder(variable_name=MEMORY_KEY),
+                MessagesPlaceholder(variable_name="chat_history"),
                 ("user", "{input}"),
                 MessagesPlaceholder(variable_name="agent_scratchpad"),
             ]
@@ -98,7 +99,7 @@ class ChatAgent:
                     "agent_scratchpad": lambda x: format_to_openai_tool_messages(
                         x["intermediate_steps"]
                     ),
-                    "chat_history": lambda x: x["chat_history"] if "chat_history" in x else [],
+                    "chat_history": lambda x: x["chat_history"] if "chat_history" in x and x["chat_history"] else [],
                 }
                 | prompt
                 | llm_with_tools
@@ -117,6 +118,8 @@ class ChatAgent:
     def run(self, input_str: str, chat_history: Optional[List] = None) -> dict:
         """Run query through ChatAgent and return result."""
         chat_history = chat_history if chat_history is not None else self.chat_history
+        if chat_history:
+            chat_history = chat_history[-self.num_memory_turns * 2:] if self.num_memory_turns > 0 else chat_history
         output = self.agent_executor.invoke({"input": input_str, "chat_history": chat_history})
         chat_history.extend([HumanMessage(content=input_str), AIMessage(content=output["output"])])
         self.chat_history = chat_history
