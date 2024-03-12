@@ -16,7 +16,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from loguru import logger
 
-from chatpilot.config import OPENAI_API_KEY, OPENAI_API_BASE, RAG_PROMPT
+from chatpilot.config import OPENAI_API_KEY, OPENAI_API_BASE, RAG_TEMPLATE
 
 
 class RagFusion:
@@ -55,7 +55,7 @@ class RagFusion:
         )
         self.retriever = vectorstore.as_retriever()
 
-        self.rag_prompt = ChatPromptTemplate.from_template(RAG_PROMPT)
+        self.rag_prompt = ChatPromptTemplate.from_template(RAG_TEMPLATE)
 
         # LLM to RAG model
         self.generate_model = ChatOpenAI(

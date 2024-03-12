@@ -13,7 +13,7 @@
 [![Downloads](https://static.pepy.tech/badge/ChatPilot)](https://pepy.tech/project/ChatPilot)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![License Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![python_version](https://img.shields.io/badge/Python-3.5%2B-green.svg)](requirements.txt)
+[![python_version](https://img.shields.io/badge/Python-3.9%2B-green.svg)](requirements.txt)
 [![GitHub issues](https://img.shields.io/github/issues/shibing624/ChatPilot.svg)](https://github.com/shibing624/ChatPilot/issues)
 [![Wechat Group](https://img.shields.io/badge/wechat-group-green.svg?logo=wechat)](#Contact)
 
@@ -37,11 +37,6 @@ HuggingFace Demo: https://huggingface.co/spaces/shibing624/ChatPilot
 
 ![](https://github.com/shibing624/ChatPilot/blob/main/docs/hf.png)
 
-run example: [examples/gradio_demo.py](https://github.com/shibing624/ChatPilot/blob/main/examples/gradio_demo.py) to see the demo:
-```shell
-python examples/gradio_demo.py
-```
-
 ## Install
 ```shell
 pip install -U chatpilot
@@ -55,28 +50,65 @@ cd ChatPilot
 pip install -e .
 ```
 
+## How to Install Without Docker
+
+While we strongly recommend using our convenient Docker container installation for optimal support, we understand that some situations may require a non-Docker setup, especially for development purposes. Please note that non-Docker installations are not officially supported, and you might need to troubleshoot on your own.
+
+### Project Components
+
+Open WebUI consists of two primary components: the frontend and the backend (which serves as a reverse proxy, handling static frontend files, and additional features). Both need to be running concurrently for the development environment.
+
+:::info
+The backend is required for proper functionality
+:::
+
+### Requirements 📦
+
+- 🐰 [Node.js](https://nodejs.org/en) >= 20.10 or [Bun](https://bun.sh) >= 1.0.21
+- 🐍 [Python](https://python.org) >= 3.11
+
+### Build and Install 🛠️
+
+Run the following commands to install:
+
+```sh
+git clone https://github.com/shibing624/ChatPilot.git
+cd ChatPilot/
+
+# Copying required .env file
+cp .env.example .env
+
+# Building Frontend Using Node
+cd web
+npm install
+npm run build
+
+# Serving Frontend with the Backend
+cd ..
+pip install -r requirements.txt -U
+bash start.sh
+```
+
+You should have Open WebUI up and running at http://localhost:8080/. Enjoy! 😄
+
 ## Usage
 
-#### FastAPI服务
+### 1. 构建前端web
 
-- 安装：
-```pip install fastapi uvicorn```
-
-- 启动服务：
-
-example: [examples/fastapi_server_demo.py](https://github.com/shibing624/ChatPilot/blob/main/examples/fastapi_server_demo.py)
+两种方法构建前端：
+1. 下载打包好的前端ui，https://github.com/shibing624/SmartSearch/releases/download/0.1.0/ui.zip 解压到项目根目录直接使用。
+2. 自己使用npm构建前端（需要nodejs 18以上版本）
 ```shell
-cd examples
-python fastapi_server_demo.py
+cd web && npm install && npm run build
 ```
+输出：项目根目录产出`ui`文件夹，包含前端静态文件。
 
-- 调用服务：
+### 2. 启动后端服务
+
 ```shell
-curl -X 'GET' \
-  'http://0.0.0.0:8001/emb?q=hello' \
-  -H 'accept: application/json'
+python main.py
 ```
-
+好了，现在你的搜索应用正在运行：http://0.0.0.0:8080
 
 
 ## Contact
@@ -122,3 +154,8 @@ BibTeX:
  - 使用`python -m pytest -v`来运行所有单元测试，确保所有单测都是通过的
 
 之后即可提交PR。
+
+## Reference
+
+- [Open WebUI](https://github.com/shibing624/ChatPilot)
+- [langchain-ai/langchain](https://github.com/langchain-ai/langchain)
