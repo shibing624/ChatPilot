@@ -12,6 +12,7 @@ from fastapi import (
     File,
 )
 from fastapi.middleware.cors import CORSMiddleware
+from loguru import logger
 
 from chatpilot.apps.auth_utils import get_current_user
 from chatpilot.config import UPLOAD_DIR
@@ -58,7 +59,7 @@ def transcribe(
         model = None
 
         segments, info = model.transcribe(file_path, beam_size=5)
-        print(
+        logger.debug(
             "Detected language '%s' with probability %f"
             % (info.language, info.language_probability)
         )
@@ -67,9 +68,9 @@ def transcribe(
 
         return {"text": transcript.strip()}
     except ImportError as ie:
-        print(ie)
+        logger.error(ie)
     except Exception as e:
-        print(e)
+        logger.error(e)
 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

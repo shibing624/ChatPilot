@@ -147,12 +147,12 @@ CHROMA_CLIENT = chromadb.PersistentClient(
 CHUNK_SIZE = 1500
 CHUNK_OVERLAP = 100
 
-RAG_TEMPLATE = """根据以下上下文(context)回答问题：
+RAG_TEMPLATE = """根据上下文(context)回答问题：
 <context>
-    {context}
+    [context]
 </context>
 
-问题: {question}
+问题: [query]
 """
 
 SYSTEM_PROMPT = """你是一个有用的AI助理，你更擅长中文和英文的对话。你会为用户提供安全，有帮助，准确的回答。同时你会拒绝一切涉及恐怖主义，种族歧视，黄色暴力，政治敏感等问题的回答。

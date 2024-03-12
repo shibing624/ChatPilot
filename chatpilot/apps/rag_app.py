@@ -6,7 +6,6 @@
 import json
 import mimetypes
 import os
-import random
 import shutil
 import uuid
 from pathlib import Path
@@ -37,6 +36,7 @@ from langchain_community.document_loaders import (
     UnstructuredRSTLoader,
     UnstructuredExcelLoader,
 )
+from loguru import logger
 from pydantic import BaseModel
 
 from chatpilot.apps.auth_utils import get_current_user, get_admin_user
@@ -85,7 +85,6 @@ else:
     app.state.sentence_transformer_ef = embedding_functions.Text2VecEmbeddingFunction(
         model_name=app.state.RAG_EMBEDDING_MODEL
     )
-
 origins = ["*"]
 
 app.add_middleware(
@@ -95,6 +94,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+logger.debug(f"app.state.sentence_transformer_ef: {app.state.sentence_transformer_ef}")
 
 
 class CollectionNameForm(BaseModel):
@@ -118,7 +119,7 @@ def store_data_in_vector_db(data, collection_name, overwrite: bool = False) -> b
         if overwrite:
             for collection in CHROMA_CLIENT.list_collections():
                 if collection_name == collection.name:
-                    print(f"deleting existing collection {collection_name}")
+                    logger.debug(f"deleting existing collection {collection_name}")
                     CHROMA_CLIENT.delete_collection(name=collection_name)
 
         collection = CHROMA_CLIENT.create_collection(
@@ -131,7 +132,7 @@ def store_data_in_vector_db(data, collection_name, overwrite: bool = False) -> b
         )
         return True
     except Exception as e:
-        print(e)
+        logger.error(e)
         if e.__class__.__name__ == "UniqueConstraintError":
             return True
 
@@ -187,7 +188,7 @@ async def update_embedding_model(
         app.state.sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(
             model_name=app.state.RAG_EMBEDDING_MODEL
         )
-
+    logger.debug(f"Update app.state.sentence_transformer_ef: {app.state.sentence_transformer_ef}")
 
     return {
         "status": True,
@@ -283,7 +284,7 @@ def query_doc_handler(
             embedding_function=app.state.sentence_transformer_ef,
         )
     except Exception as e:
-        print(e)
+        logger.error(e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ERROR_MESSAGES.DEFAULT(e),

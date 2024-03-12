@@ -6,6 +6,7 @@
 import re
 from typing import List
 from loguru import logger
+
 from chatpilot.config import CHROMA_CLIENT
 
 
