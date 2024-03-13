@@ -13,6 +13,7 @@ from fastapi import FastAPI, Request, Depends, status
 from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from loguru import logger
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -31,6 +32,7 @@ from chatpilot.config import (
     WEBUI_NAME,
     ENV,
     FRONTEND_BUILD_DIR,
+    FRONTEND_STATIC_DIR,
     MODEL_FILTER_ENABLED,
     MODEL_FILTER_LIST,
     CACHE_DIR,
@@ -39,6 +41,16 @@ from chatpilot.constants import ERROR_MESSAGES
 from chatpilot.version import __version__ as VERSION
 
 pwd_path = os.path.abspath(os.path.dirname(__file__))
+
+logger.info(f"""
+ENV: {ENV}
+WEBUI_NAME: {WEBUI_NAME}
+FRONTEND_BUILD_DIR: {FRONTEND_BUILD_DIR}
+FRONTEND_STATIC_DIR: {FRONTEND_STATIC_DIR}
+MODEL_FILTER_ENABLED: {MODEL_FILTER_ENABLED}
+MODEL_FILTER_LIST: {MODEL_FILTER_LIST}
+CACHE_DIR: {CACHE_DIR}
+""")
 
 
 class SPAStaticFiles(StaticFiles):
@@ -63,9 +75,10 @@ origins = ["*"]
 class RAGMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if request.method == "POST" and (
-                "/api/chat" in request.url.path or "/chat/completions" in request.url.path
+                "/api/chat" in request.url.path or
+                "/chat/completions" in request.url.path
         ):
-            print(request.url.path)
+            logger.debug(f"request: {request.url.path}")
 
             # Read the original request body
             body = await request.body()
@@ -86,8 +99,7 @@ class RAGMiddleware(BaseHTTPMiddleware):
                     rag_app.state.sentence_transformer_ef,
                 )
                 del data["docs"]
-
-                print(data["messages"])
+            logger.debug(f"rag data: {data}")
 
             modified_body_bytes = json.dumps(data).encode("utf-8")
 
@@ -216,7 +228,7 @@ async def get_app_latest_release_version():
         )
 
 
-app.mount("/static", StaticFiles(directory=os.path.join(pwd_path, "../web/static")), name="static")
+app.mount("/static", StaticFiles(directory=FRONTEND_STATIC_DIR), name="static")
 app.mount("/cache", StaticFiles(directory=CACHE_DIR), name="cache")
 
 app.mount("/", SPAStaticFiles(directory=FRONTEND_BUILD_DIR, html=True), name="spa-static-files")

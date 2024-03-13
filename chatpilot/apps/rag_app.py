@@ -23,7 +23,6 @@ from fastapi import (
     Form,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import (
     WebBaseLoader,
     TextLoader,
@@ -46,7 +45,7 @@ from chatpilot.apps.misc import (
     sanitize_filename,
     extract_folders_after_data_docs,
 )
-from chatpilot.apps.rag_utils import query_doc, query_collection
+from chatpilot.apps.rag_utils import query_doc, query_collection, ChineseRecursiveTextSplitter
 from chatpilot.apps.web.models.documents import (
     Documents,
     DocumentForm,
@@ -71,7 +70,7 @@ app.state.CHUNK_SIZE = CHUNK_SIZE
 app.state.CHUNK_OVERLAP = CHUNK_OVERLAP
 app.state.RAG_TEMPLATE = RAG_TEMPLATE
 app.state.RAG_EMBEDDING_MODEL = RAG_EMBEDDING_MODEL
-app.state.TOP_K = 4
+app.state.TOP_K = 3
 app.state.OPENAI_API_KEYS = OPENAI_API_KEYS
 app.state.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
 
@@ -107,7 +106,7 @@ class StoreWebForm(CollectionNameForm):
 
 
 def store_data_in_vector_db(data, collection_name, overwrite: bool = False) -> bool:
-    text_splitter = RecursiveCharacterTextSplitter(
+    text_splitter = ChineseRecursiveTextSplitter(
         chunk_size=app.state.CHUNK_SIZE, chunk_overlap=app.state.CHUNK_OVERLAP
     )
     docs = text_splitter.split_documents(data)
@@ -173,7 +172,7 @@ async def update_embedding_model(
                 model_name=app.state.RAG_EMBEDDING_MODEL,
             )
         )
-    elif "openai" in app.state.RAG_EMBEDDING_MODEL or "text-embedding" in app.state.RAG_EMBEDDING_MODEL:
+    elif "text-embedding" in app.state.RAG_EMBEDDING_MODEL:
         if app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
             app.state.sentence_transformer_ef = (
                 embedding_functions.OpenAIEmbeddingFunction(
@@ -298,10 +297,8 @@ class QueryCollectionsForm(BaseModel):
 
 
 @app.post("/query/collection")
-def query_collection_handler(
-        form_data: QueryCollectionsForm,
-        user=Depends(get_current_user),
-):
+def query_collection_handler(form_data: QueryCollectionsForm, user=Depends(get_current_user)):
+    """Query collection, default db is chroma."""
     return query_collection(
         collection_names=form_data.collection_names,
         query=form_data.query,
@@ -312,8 +309,9 @@ def query_collection_handler(
 
 @app.post("/web")
 def store_web(form_data: StoreWebForm, user=Depends(get_current_user)):
-    # "https://www.gutenberg.org/files/1727/1727-h/1727-h.htm"
+    """Get data from web and store in vector db."""
     try:
+        # input is url, e.g. "https://www.gutenberg.org/files/1727/1727-h/1727-h.htm"
         loader = WebBaseLoader(form_data.url)
         data = loader.load()
 
@@ -328,7 +326,7 @@ def store_web(form_data: StoreWebForm, user=Depends(get_current_user)):
             "filename": form_data.url,
         }
     except Exception as e:
-        print(e)
+        logger.error(e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ERROR_MESSAGES.DEFAULT(e),
@@ -336,6 +334,7 @@ def store_web(form_data: StoreWebForm, user=Depends(get_current_user)):
 
 
 def get_loader(filename: str, file_content_type: str, file_path: str):
+    """Get loader by file type."""
     file_ext = filename.split(".")[-1].lower()
     known_type = True
 
@@ -424,9 +423,8 @@ def store_doc(
         file: UploadFile = File(...),
         user=Depends(get_current_user),
 ):
-    # "https://www.gutenberg.org/files/1727/1727-h/1727-h.htm"
-
-    print(file.content_type)
+    """Store doc in vector db, support csv, docx, epub, md, pdf, rst, xml, xls, xlsx, and text"""
+    logger.debug(f"rag doc, file type: {file.content_type}")
     try:
         filename = file.filename
         file_path = f"{UPLOAD_DIR}/{filename}"
@@ -457,7 +455,7 @@ def store_doc(
                 detail=ERROR_MESSAGES.DEFAULT(),
             )
     except Exception as e:
-        print(e)
+        logger.error(e)
         if "No pandoc was found" in str(e):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -472,6 +470,7 @@ def store_doc(
 
 @app.get("/scan")
 def scan_docs_dir(user=Depends(get_admin_user)):
+    """Scan docs dir and store in vector db, only for admin user."""
     for path in Path(DOCS_DIR).rglob("./**/*"):
         try:
             if path.is_file() and not path.name.startswith("."):
@@ -494,7 +493,7 @@ def scan_docs_dir(user=Depends(get_admin_user)):
                     sanitized_filename = sanitize_filename(filename)
                     doc = Documents.get_doc_by_name(sanitized_filename)
 
-                    if doc == None:
+                    if doc is None:
                         doc = Documents.insert_new_doc(
                             user.id,
                             DocumentForm(
@@ -522,7 +521,7 @@ def scan_docs_dir(user=Depends(get_admin_user)):
                         )
 
         except Exception as e:
-            print(e)
+            logger.error(e)
 
     return True
 
@@ -543,11 +542,11 @@ def reset(user=Depends(get_admin_user)) -> bool:
             elif os.path.isdir(file_path):
                 shutil.rmtree(file_path)
         except Exception as e:
-            print("Failed to delete %s. Reason: %s" % (file_path, e))
+            logger.error("Failed to delete %s. Reason: %s" % (file_path, e))
 
     try:
         CHROMA_CLIENT.reset()
     except Exception as e:
-        print(e)
+        logger.error(e)
 
     return True

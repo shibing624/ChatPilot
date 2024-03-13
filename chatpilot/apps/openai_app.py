@@ -3,36 +3,39 @@
 @author:XuMing(xuming624@qq.com)
 @description: 
 """
-from fastapi import FastAPI, Request, HTTPException, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, FileResponse
-
-import requests
-import aiohttp
 import asyncio
+import hashlib
 import json
 import random
+import threading
+import time
+from pathlib import Path
+from typing import List, Optional
+
+import aiohttp
+import requests
+from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, StreamingResponse
+from langchain_core.messages import AIMessage, HumanMessage
+from loguru import logger
 from pydantic import BaseModel
 
-from chatpilot.constants import ERROR_MESSAGES
 from chatpilot.apps.auth_utils import (
     get_current_user,
     get_verified_user,
     get_admin_user,
 )
-from loguru import logger
+from chatpilot.chat_agent import ChatAgent
 from chatpilot.config import (
     OPENAI_API_BASE_URLS,
     OPENAI_API_KEYS,
     CACHE_DIR,
     MODEL_FILTER_ENABLED,
     MODEL_FILTER_LIST,
+    SERPER_API_KEY,
 )
-from typing import List, Optional
-
-
-import hashlib
-from pathlib import Path
+from chatpilot.constants import ERROR_MESSAGES
 
 app = FastAPI()
 app.add_middleware(
@@ -50,6 +53,39 @@ app.state.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
 app.state.OPENAI_API_KEYS = OPENAI_API_KEYS
 
 app.state.MODELS = {}
+
+
+def local_client(
+        model,
+        search,
+        max_tokens,
+        stream,
+        api_key,
+        api_base,
+        temperature=0.7,
+        **kwargs
+):
+    """
+    Gets a thread-local client, so in case openai clients are not thread safe,
+    each thread will have its own client.
+    """
+    thread_local = threading.local()
+    try:
+        return thread_local.client
+    except AttributeError:
+        logger.debug(f"Creating new ChatAgent for model: {model}")
+        thread_local.client = ChatAgent(
+            openai_model=model,
+            search_engine_name=search,
+            verbose=True,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            streaming=stream,
+            openai_api_base=api_base,
+            openai_api_key=api_key,
+            **kwargs
+        )
+        return thread_local.client
 
 
 @app.middleware("http")
@@ -97,9 +133,9 @@ async def update_openai_key(form_data: KeysUpdateForm, user=Depends(get_admin_us
 
 @app.post("/audio/speech")
 async def speech(request: Request, user=Depends(get_verified_user)):
-    idx = None
+    r = None
     try:
-        idx = app.state.OPENAI_API_BASE_URLS.index(random.choice(app.state.OPENAI_API_BASE_URLS))
+        idx = random.randrange(len(app.state.OPENAI_API_BASE_URLS))
         body = await request.body()
         name = hashlib.sha256(body).hexdigest()
 
@@ -160,7 +196,6 @@ async def fetch_url(url, key):
             async with session.get(url, headers=headers) as response:
                 return await response.json()
     except Exception as e:
-        # Handle connection error here
         logger.error(f"Connection error: {e}")
         return None
 
@@ -183,7 +218,7 @@ async def get_all_models():
     if len(app.state.OPENAI_API_KEYS) == 1 and app.state.OPENAI_API_KEYS[0] == "":
         models = {"data": []}
     else:
-        logger.debug(f"keys: {app.state.OPENAI_API_BASE_URLS}, {app.state.OPENAI_API_KEYS}")
+        logger.debug(f"base urls: {app.state.OPENAI_API_BASE_URLS}, keys: {app.state.OPENAI_API_KEYS}")
 
         tasks = [
             fetch_url(f"{url}/models", app.state.OPENAI_API_KEYS[idx])
@@ -200,12 +235,13 @@ async def get_all_models():
         }
         app.state.MODELS = {model["id"]: model for model in models["data"]}
         logger.debug(f"get_all_models done, size: {len(app.state.MODELS)}")
-        return models
+    return models
 
 
 @app.get("/models")
 @app.get("/models/{url_idx}")
 async def get_models(url_idx: Optional[int] = None, user=Depends(get_current_user)):
+    r = None
     if url_idx is None:
         models = await get_all_models()
         if app.state.MODEL_FILTER_ENABLED:
@@ -225,7 +261,7 @@ async def get_models(url_idx: Optional[int] = None, user=Depends(get_current_use
             r.raise_for_status()
 
             response_data = r.json()
-            if  url:
+            if url:
                 response_data["data"] = list(
                     filter(lambda model: "gpt" in model["id"], response_data["data"])
                 )
@@ -250,79 +286,80 @@ async def get_models(url_idx: Optional[int] = None, user=Depends(get_current_use
 
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
-    r = None
-    idx = app.state.OPENAI_API_BASE_URLS.index(random.choice(app.state.OPENAI_API_BASE_URLS))
+    logger.debug(f"Proxying request to OpenAI: {path}")
+    idx = random.randrange(len(app.state.OPENAI_API_BASE_URLS))
 
     body = await request.body()
-    # TODO: Remove below after gpt-4-vision fix from Open AI
-    # Try to decode the body of the request from bytes to a UTF-8 string (Require add max_token to fix gpt-4-vision)
-    try:
-        body = body.decode("utf-8")
-        body = json.loads(body)
-
-        idx = app.state.MODELS[body.get("model")]["urlIdx"]
-
-        # Check if the model is "gpt-4-vision-preview" and set "max_tokens" to 4000
-        # This is a workaround until OpenAI fixes the issue with this model
-        if body.get("model") == "gpt-4-vision-preview":
-            if "max_tokens" not in body:
-                body["max_tokens"] = 4000
-            logger.trace(f"Modified body_dict: {body}")
-
-        # Fix for ChatGPT calls failing because the num_ctx key is in body
-        if "num_ctx" in body:
-            # If 'num_ctx' is in the dictionary, delete it
-            # Leaving it there generates an error with the
-            # OpenAI API (Feb 2024)
-            del body["num_ctx"]
-
-        # Convert the modified body back to JSON
-        body = json.dumps(body)
-    except json.JSONDecodeError as e:
-        logger.error(f"Error loading request body into a dictionary: {e}")
-
+    body_dict = json.loads(body.decode("utf-8"))
     url = app.state.OPENAI_API_BASE_URLS[idx]
     key = app.state.OPENAI_API_KEYS[idx]
-
-    target_url = f"{url}/{path}"
 
     if not key:
         raise HTTPException(status_code=401, detail=ERROR_MESSAGES.API_KEY_NOT_FOUND)
 
-    headers = {}
-    headers["Authorization"] = f"Bearer {key}"
-    headers["Content-Type"] = "application/json"
-
     try:
-        r = requests.request(
-            method=request.method,
-            url=target_url,
-            data=body,
-            headers=headers,
-            stream=True,
+        search = "serper" if SERPER_API_KEY else "duckduckgo"
+        openai_model = body_dict.get('model', 'gpt-3.5-turbo')
+        client = local_client(
+            openai_model,
+            search,
+            body_dict.get("max_tokens", 1000),
+            body_dict.get("stream", True),
+            key,
+            url,
+            temperature=body_dict.get("temperature", 0.7)
         )
-        logger.debug(f"request url: {target_url}, response: {r}")
-        r.raise_for_status()
 
-        # Check if response is SSE
-        if "text/event-stream" in r.headers.get("Content-Type", ""):
-            return StreamingResponse(
-                r.iter_content(chunk_size=8192),
-                status_code=r.status_code,
-                headers=dict(r.headers),
-            )
-        else:
-            response_data = r.json()
-            return response_data
+        messages = body_dict.get("messages", [])
+        history = []
+        for message in messages:
+            if message["role"] == "user":
+                history.append(HumanMessage(content=message["content"]))
+            elif message["role"] == "assistant":
+                history.append(AIMessage(content=message["content"]))
+        if history and len(history) > 1:
+            history = history[:-1]  # drop user input message
+        if history and len(history) > 10:
+            history = history[-10:]  # keep last 10 messages
+        input_str = ""
+        if messages and messages[-1]["role"] == "user":
+            input_str = messages[-1]["content"]
+        events = await client.stream_run(input_str, chat_history=history)
+        created = int(time.time())
+
+        async def event_generator():
+            """组装为标准流式输出"""
+            async for event in events:
+                kind = event['event']
+                if kind in ['on_tool_start', 'on_chat_model_stream']:
+                    if kind == "on_tool_start":
+                        c = f"Invoking: `{event['name']}`\n```\n{event['data'].get('input', '')}\n```\n\n"
+                    else:
+                        c = event['data']['chunk'].content
+
+                    data_structure = {
+                        "id": event.get('id', 'default_id'),
+                        "object": "chat.completion.chunk",
+                        "created": event.get('created', created),
+                        "model": openai_model,
+                        "system_fingerprint": event.get('system_fingerprint', ''),
+                        "choices": [
+                            {
+                                "index": 0,
+                                "delta": {"content": c},
+                                "logprobs": None,
+                                "finish_reason": None
+                            }
+                        ]
+                    }
+                    formatted_data = f"data: {json.dumps(data_structure)}\n\n"
+                    yield formatted_data.encode()
+
+            formatted_data_done = f"data: [DONE]\n\n"
+            yield formatted_data_done.encode()
+
+        return StreamingResponse(event_generator(), media_type='text/event-stream')
     except Exception as e:
         logger.error(e)
         error_detail = "Server Connection Error"
-        if r is not None:
-            try:
-                res = r.json()
-                if "error" in res:
-                    error_detail = f"External: {res['error']}"
-            except:
-                error_detail = f"External: {e}"
-
-        raise HTTPException(status_code=r.status_code, detail=error_detail)
+        raise HTTPException(status_code=500, detail=error_detail)

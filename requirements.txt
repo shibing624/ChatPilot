@@ -12,6 +12,7 @@ loguru
 uvicorn[standard]
 pydantic
 python-multipart
+sse-starlette
 
 flask
 flask_cors

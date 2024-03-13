@@ -2,7 +2,7 @@
 
 <div align="center">
   <a href="https://github.com/shibing624/ChatPilot">
-    <img src="https://github.com/shibing624/ChatPilot/blob/main/docs/logo.png" height="150" alt="Logo">
+    <img src="https://github.com/shibing624/ChatPilot/blob/main/docs/favicon.png" height="150" alt="Logo">
   </a>
 </div>
 
@@ -18,16 +18,18 @@
 [![Wechat Group](https://img.shields.io/badge/wechat-group-green.svg?logo=wechat)](#Contact)
 
 
-**ChatPilot**: Chat with Agent.
+**ChatPilot**: Chat with Agent. 复现kimi chat，基于chat agent支持联网搜索，文件、网址对话（文件，拖进来；网址，发出来），支持python代码解释器（虚拟环境），支持多轮对话，支持OpenAI API。
 
 
 ## Features
-### Agent
 
-1. search
-2. rag：本项目新增了基于langchain的RAG fusion实现[rag_fusion.py](https://github.com/shibing624/ChatPilot/blob/main/chatpilot/rag_fusion.py)，多个近似query的检索结果融合，提升检索准确率
-3. chat
-4. crawler
+- 本项目基于Agent实现了搜索问答
+- 本项目基于Agent实现了文件对话（RAG），复现 [kimi chat(文件，拖进来；网址，发出来)](https://kimi.moonshot.cn/) 的文件、网址对话功能
+- 本项目基于Agent实现了python代码解释器，支持E2B虚拟环境和本地python编译器环境运行代码
+
+- 借鉴[open-webui](https://github.com/open-webui/open-webui)支持前后端分离，前端使用Svelte，后端使用FastAPI
+- 支持语音输入，支持图像生成
+- 支持用户管理，权限控制，支持聊天记录导入导出
 
 ## Demo
 
@@ -50,27 +52,20 @@ cd ChatPilot
 pip install -e .
 ```
 
-## How to Install Without Docker
-
-While we strongly recommend using our convenient Docker container installation for optimal support, we understand that some situations may require a non-Docker setup, especially for development purposes. Please note that non-Docker installations are not officially supported, and you might need to troubleshoot on your own.
-
-### Project Components
-
-Open WebUI consists of two primary components: the frontend and the backend (which serves as a reverse proxy, handling static frontend files, and additional features). Both need to be running concurrently for the development environment.
-
-:::info
-The backend is required for proper functionality
-:::
 
 ### Requirements 📦
 
 - 🐰 [Node.js](https://nodejs.org/en) >= 20.10 or [Bun](https://bun.sh) >= 1.0.21
 - 🐍 [Python](https://python.org) >= 3.11
 
-### Build and Install 🛠️
 
-Run the following commands to install:
+## Usage
 
+### 1. 构建前端web
+
+两种方法构建前端：
+1. 下载打包好的前端ui，https://github.com/shibing624/ChatPilot/releases/download/0.0.2/build.zip 解压到项目web目录下。
+2. 自己使用npm构建前端（需要nodejs 18以上版本）
 ```sh
 git clone https://github.com/shibing624/ChatPilot.git
 cd ChatPilot/
@@ -82,33 +77,17 @@ cp .env.example .env
 cd web
 npm install
 npm run build
-
-# Serving Frontend with the Backend
-cd ..
-pip install -r requirements.txt -U
-bash start.sh
 ```
-
-You should have Open WebUI up and running at http://localhost:8080/. Enjoy! 😄
-
-## Usage
-
-### 1. 构建前端web
-
-两种方法构建前端：
-1. 下载打包好的前端ui，https://github.com/shibing624/SmartSearch/releases/download/0.1.0/ui.zip 解压到项目根目录直接使用。
-2. 自己使用npm构建前端（需要nodejs 18以上版本）
-```shell
-cd web && npm install && npm run build
-```
-输出：项目根目录产出`ui`文件夹，包含前端静态文件。
+输出：项目`web`目录产出`build`文件夹，包含了前端编译输出文件。
 
 ### 2. 启动后端服务
 
 ```shell
-python main.py
+cd ..
+pip install -r requirements.txt -U
+bash start.sh
 ```
-好了，现在你的搜索应用正在运行：http://0.0.0.0:8080
+好了，现在你的应用正在运行：http://0.0.0.0:8080 Enjoy! 😄
 
 
 ## Contact

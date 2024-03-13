@@ -3,6 +3,7 @@
 @author:XuMing(xuming624@qq.com)
 @description: 
 """
+import asyncio
 from datetime import datetime
 from typing import List, Optional
 
@@ -35,9 +36,13 @@ class ChatAgent:
             search_engine_name: str = "serper",
             verbose: bool = True,
             max_iterations: int = 5,
-            max_execution_time: int = 60,
+            max_execution_time: int = 120,
             temperature: float = 0.7,
             num_memory_turns: int = 5,
+            max_tokens: int = 1000,
+            streaming: bool = False,
+            openai_api_base: str = OPENAI_API_BASE,
+            openai_api_key: str = OPENAI_API_KEY,
     ):
         if not OPENAI_API_KEY:
             raise Exception("Missing `OPENAI_API_KEY` environment variable.")
@@ -45,8 +50,11 @@ class ChatAgent:
         self.llm = ChatOpenAI(
             model=openai_model,
             temperature=temperature,
-            openai_api_base=OPENAI_API_BASE,
-            openai_api_key=OPENAI_API_KEY
+            openai_api_base=openai_api_base,
+            openai_api_key=openai_api_key,
+            max_tokens=max_tokens,
+            timeout=max_execution_time,
+            streaming=streaming,
         )
 
         # define search engine
@@ -66,7 +74,7 @@ class ChatAgent:
         if E2B_API_KEY:
             run_python_code_tool = E2BDataAnalysisTool(api_key=E2B_API_KEY)
         else:
-            run_python_code_tool = PythonREPLTool
+            run_python_code_tool = PythonREPLTool()
         run_python_code_tool.description = RUN_PYTHON_CODE_DESC
         tools = [
             Tool(
@@ -112,7 +120,7 @@ class ChatAgent:
             return_intermediate_steps=True,
             max_iterations=max_iterations,
             max_execution_time=max_execution_time
-        )
+        ).with_config({"run_name": "ChatAgent"})
         logger.debug(f"ChatAgent agent_executor is ready, openai_model: {openai_model}")
 
     def run(self, input_str: str, chat_history: Optional[List] = None) -> dict:
@@ -125,6 +133,14 @@ class ChatAgent:
         self.chat_history = chat_history
         return output
 
+    async def stream_run(self, input_str: str, chat_history: Optional[List] = None):
+        """Run query through ChatAgent and return result."""
+        chat_history = chat_history if chat_history is not None else self.chat_history
+        if chat_history:
+            chat_history = chat_history[-self.num_memory_turns * 2:] if self.num_memory_turns > 0 else chat_history
+        events = self.agent_executor.astream_events({"input": input_str, "chat_history": chat_history}, version="v1")
+        return events
+
 
 if __name__ == '__main__':
     m = ChatAgent()
@@ -135,6 +151,25 @@ if __name__ == '__main__':
     ]
     for i in questions:
         print(i)
-        r = m.run(i)
-        print(r)
         print("===")
+
+
+    async def main():
+        m = ChatAgent()
+
+        questions = [
+            "俄罗斯今日新闻top3",
+            # "人体最大的器官是啥",
+            # "how many letters in the word 'educabe'?",
+            # "它是一个真的单词吗？",
+        ]
+        for i in questions:
+            print(i)
+            events = await m.stream_run(i)
+            async for event in events:
+                print(event)
+                print("===")
+                pass
+
+
+    asyncio.run(main())

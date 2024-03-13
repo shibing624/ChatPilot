@@ -6,26 +6,33 @@
 import json
 import os
 from pathlib import Path
-from loguru import logger
+
 import chromadb
 import yaml
 from chromadb import Settings
+from loguru import logger
 
 from chatpilot.constants import ERROR_MESSAGES
 
 pwd_path = os.path.abspath(os.path.dirname(__file__))
 WEBUI_NAME = "ChatPilot"
+ENV = os.environ.get("ENV", "dev")
+DOTENV_PATH = os.getenv("DOTENV_PATH", os.path.join(pwd_path, "../.env"))
 try:
-    from dotenv import load_dotenv, find_dotenv
+    from dotenv import load_dotenv  # noqa
 
-    load_dotenv(find_dotenv("../.env"))
+    if load_dotenv(DOTENV_PATH):
+        logger.info(f"Loaded environment variables from {DOTENV_PATH}")
 except ImportError:
     logger.debug("dotenv not installed, skipping...")
 
-DATA_DIR = str(Path(os.getenv("DATA_DIR", "~/.cache/chatpilot/data")).resolve())
+DATA_DIR = str(os.path.expanduser(os.getenv("DATA_DIR", "~/.cache/chatpilot/data")))
 DB_PATH = f"{DATA_DIR}/web.db"
-ENV = os.environ.get("ENV", "dev")
+
+# Frontend build dir, which is npm build dir
 FRONTEND_BUILD_DIR = str(Path(os.getenv("FRONTEND_BUILD_DIR", os.path.join(pwd_path, "../web/build"))))
+# Frontend static dir, which is for static files like favicon, logo, etc
+FRONTEND_STATIC_DIR = str(Path(os.getenv("FRONTEND_STATIC_DIR", os.path.join(pwd_path, "../web/static"))))
 
 try:
     with open(f"{DATA_DIR}/config.json", "r") as f:
@@ -104,25 +111,27 @@ if OLLAMA_BASE_URL == "" and OLLAMA_API_BASE_URL != "":
         else OLLAMA_API_BASE_URL
     )
 
-OLLAMA_BASE_URLS = os.environ.get("OLLAMA_BASE_URLS", "")
-OLLAMA_BASE_URLS = OLLAMA_BASE_URLS if OLLAMA_BASE_URLS != "" else OLLAMA_BASE_URL
-
-OLLAMA_BASE_URLS = [url.strip() for url in OLLAMA_BASE_URLS.split(";")]
+OLLAMA_BASE_URLS = [url.strip() for url in OLLAMA_BASE_URL.split(";")]
 
 ####################################
 # OPENAI_API
 ####################################
 
+# api key can be multiple, separated by ;
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-OPENAI_API_BASE = os.environ.get("OPENAI_API_BASE", "https://api.openai.com/v1")
-
 OPENAI_API_KEYS = os.environ.get("OPENAI_API_KEYS", OPENAI_API_KEY)
-OPENAI_API_KEYS = [url.strip() for url in OPENAI_API_KEYS.split(";")]
+OPENAI_API_KEYS = [i.strip() for i in OPENAI_API_KEYS.split(";")]
+# if no api key is provided, set it with fist one
+if not OPENAI_API_KEY and len(OPENAI_API_KEYS) > 0:
+    OPENAI_API_KEY = OPENAI_API_KEYS[0]
 
-OPENAI_API_BASE_URLS = os.environ.get("OPENAI_API_BASE_URLS", "")
-OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS if OPENAI_API_BASE_URLS else OPENAI_API_BASE
-
-OPENAI_API_BASE_URLS = [url.strip() for url in OPENAI_API_BASE_URLS.split(";")]
+# api base url can be multiple, separated by ; same lengths as api keys
+OPENAI_API_BASE = os.environ.get("OPENAI_API_BASE", "https://api.openai.com/v1")
+OPENAI_API_BASE_URLS = os.environ.get("OPENAI_API_BASE_URLS", OPENAI_API_BASE)
+OPENAI_API_BASE_URLS = [i.strip() for i in OPENAI_API_BASE_URLS.split(";")]
+# if no api base url is provided, set it with fist one
+if not OPENAI_API_BASE and len(OPENAI_API_BASE_URLS) > 0:
+    OPENAI_API_BASE = OPENAI_API_BASE_URLS[0]
 assert len(OPENAI_API_KEYS) == len(OPENAI_API_BASE_URLS), "Number of OpenAI API keys and base URLs should be the same"
 
 # Search engine
@@ -144,7 +153,7 @@ CHROMA_CLIENT = chromadb.PersistentClient(
     settings=Settings(allow_reset=True, anonymized_telemetry=False),
 )
 
-CHUNK_SIZE = 1500
+CHUNK_SIZE = 2000
 CHUNK_OVERLAP = 100
 
 RAG_TEMPLATE = """根据上下文(context)回答问题：

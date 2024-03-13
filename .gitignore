@@ -183,3 +183,8 @@ cython_debug/
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+web/.svelte-kit/
+web/.svelte-kit
+web/build
+web/node_modules
+web/.yarn

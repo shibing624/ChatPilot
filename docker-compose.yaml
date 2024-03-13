@@ -10,16 +10,16 @@ services:
     restart: unless-stopped
     image: ollama/ollama:latest
 
-  open-webui:
+  chatpilot:
     build:
       context: .
       args:
         OLLAMA_BASE_URL: '/ollama'
       dockerfile: Dockerfile
     image: ghcr.io/shibing624/ChatPilot:main
-    container_name: open-webui
+    container_name: chatpilot
     volumes:
-      - open-webui:/app/backend/data
+      - chatpilot:/app/backend/data
     depends_on:
       - ollama
     ports:
@@ -33,4 +33,4 @@ services:
 
 volumes:
   ollama: {}
-  open-webui: {}
+  chatpilot: {}
