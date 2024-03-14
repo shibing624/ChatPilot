@@ -70,7 +70,7 @@ app.state.CHUNK_SIZE = CHUNK_SIZE
 app.state.CHUNK_OVERLAP = CHUNK_OVERLAP
 app.state.RAG_TEMPLATE = RAG_TEMPLATE
 app.state.RAG_EMBEDDING_MODEL = RAG_EMBEDDING_MODEL
-app.state.TOP_K = 3
+app.state.TOP_K = 5
 app.state.OPENAI_API_KEYS = OPENAI_API_KEYS
 app.state.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
 
@@ -434,7 +434,7 @@ def store_doc(
             f.close()
 
         f = open(file_path, "rb")
-        if collection_name == None:
+        if collection_name is None:
             collection_name = calculate_sha256(f)[:63]
         f.close()
 

@@ -219,7 +219,6 @@ def rag_messages(docs, messages, template, k, embedding_function):
 
     for doc in docs:
         context = None
-
         try:
             if doc["type"] == "collection":
                 context = query_collection(
@@ -237,8 +236,6 @@ def rag_messages(docs, messages, template, k, embedding_function):
                 )
         except Exception as e:
             logger.error(e)
-            context = None
-
         relevant_contexts.append(context)
 
     context_string = ""

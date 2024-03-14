@@ -222,6 +222,7 @@ async def get_app_latest_release_version():
 
         return {"current": VERSION, "latest": latest_version[1:]}
     except Exception as e:
+        logger.error(e)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=ERROR_MESSAGES.RATE_LIMIT_EXCEEDED,

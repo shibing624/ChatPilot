@@ -413,7 +413,7 @@ async def copy_model(
         url_idx: Optional[int] = None,
         user=Depends(get_admin_user),
 ):
-    if url_idx == None:
+    if url_idx is None:
         if form_data.source in app.state.MODELS:
             url_idx = app.state.MODELS[form_data.source]["urls"][0]
         else:
@@ -460,7 +460,7 @@ async def delete_model(
         url_idx: Optional[int] = None,
         user=Depends(get_admin_user),
 ):
-    if url_idx == None:
+    if url_idx is None:
         if form_data.name in app.state.MODELS:
             url_idx = app.state.MODELS[form_data.name]["urls"][0]
         else:
@@ -552,7 +552,7 @@ async def generate_embeddings(
         url_idx: Optional[int] = None,
         user=Depends(get_current_user),
 ):
-    if url_idx == None:
+    if url_idx is None:
         if form_data.model in app.state.MODELS:
             url_idx = random.choice(app.state.MODELS[form_data.model]["urls"])
         else:
@@ -611,7 +611,7 @@ async def generate_completion(
         url_idx: Optional[int] = None,
         user=Depends(get_current_user),
 ):
-    if url_idx == None:
+    if url_idx is None:
         if form_data.model in app.state.MODELS:
             url_idx = random.choice(app.state.MODELS[form_data.model]["urls"])
         else:
@@ -708,7 +708,7 @@ async def generate_chat_completion(
         url_idx: Optional[int] = None,
         user=Depends(get_current_user),
 ):
-    if url_idx == None:
+    if url_idx is None:
         if form_data.model in app.state.MODELS:
             url_idx = random.choice(app.state.MODELS[form_data.model]["urls"])
         else:
@@ -806,7 +806,7 @@ async def generate_openai_chat_completion(
         url_idx: Optional[int] = None,
         user=Depends(get_current_user),
 ):
-    if url_idx == None:
+    if url_idx is None:
         if form_data.model in app.state.MODELS:
             url_idx = random.choice(app.state.MODELS[form_data.model]["urls"])
         else:

@@ -6,7 +6,6 @@ import jwt
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
-
 from chatpilot.config import WEBUI_SECRET_KEY
 from chatpilot.constants import ERROR_MESSAGES
 
@@ -100,3 +99,4 @@ def get_admin_user(user=Depends(get_current_user)):
             detail=ERROR_MESSAGES.ACCESS_PROHIBITED,
         )
     return user
+

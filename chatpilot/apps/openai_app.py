@@ -6,8 +6,6 @@
 import asyncio
 import hashlib
 import json
-import random
-import threading
 import time
 from pathlib import Path
 from typing import List, Optional
@@ -34,6 +32,7 @@ from chatpilot.config import (
     MODEL_FILTER_ENABLED,
     MODEL_FILTER_LIST,
     SERPER_API_KEY,
+    OpenAIClientWrapper,
 )
 from chatpilot.constants import ERROR_MESSAGES
 
@@ -49,43 +48,38 @@ app.add_middleware(
 app.state.MODEL_FILTER_ENABLED = MODEL_FILTER_ENABLED
 app.state.MODEL_FILTER_LIST = MODEL_FILTER_LIST
 
-app.state.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
 app.state.OPENAI_API_KEYS = OPENAI_API_KEYS
+app.state.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
+if app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
+    # chat agent
+    app.state.AGENT_MODEL_NAME = "gpt-3.5-turbo"
+    app.state.AGENT_SEARCH_ENGINE_NAME = "serper" if SERPER_API_KEY else "duckduckgo"
+    app.state.AGENT_TEMPERATURE = 0.7
+    app.state.AGENT_MAX_TOKENS = 1024
+    app.state.AGENT_MAX_CONTEXT_TOKENS = 8192
+    app.state.AGENT_STREAMING = True
+    app.state.AGENT = ChatAgent(
+        openai_model=app.state.AGENT_MODEL_NAME,
+        search_engine_name=app.state.AGENT_SEARCH_ENGINE_NAME,
+        verbose=True,
+        temperature=app.state.AGENT_TEMPERATURE,
+        max_tokens=app.state.AGENT_MAX_TOKENS,
+        max_context_tokens=app.state.AGENT_MAX_CONTEXT_TOKENS,
+        streaming=app.state.AGENT_STREAMING,
+        openai_api_bases=OPENAI_API_BASE_URLS,
+        openai_api_keys=OPENAI_API_KEYS,
+    )
+    # openai audio speech (TTS)
+    app.state.CLIENT_MANAGER = OpenAIClientWrapper(
+        keys=OPENAI_API_KEYS, base_urls=OPENAI_API_BASE_URLS
+    )
+
+
+else:
+    app.state.AGENT = None
+    app.state.CLIENT_MANAGER = None
 
 app.state.MODELS = {}
-
-
-def local_client(
-        model,
-        search,
-        max_tokens,
-        stream,
-        api_key,
-        api_base,
-        temperature=0.7,
-        **kwargs
-):
-    """
-    Gets a thread-local client, so in case openai clients are not thread safe,
-    each thread will have its own client.
-    """
-    thread_local = threading.local()
-    try:
-        return thread_local.client
-    except AttributeError:
-        logger.debug(f"Creating new ChatAgent for model: {model}")
-        thread_local.client = ChatAgent(
-            openai_model=model,
-            search_engine_name=search,
-            verbose=True,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            streaming=stream,
-            openai_api_base=api_base,
-            openai_api_key=api_key,
-            **kwargs
-        )
-        return thread_local.client
 
 
 @app.middleware("http")
@@ -135,7 +129,7 @@ async def update_openai_key(form_data: KeysUpdateForm, user=Depends(get_admin_us
 async def speech(request: Request, user=Depends(get_verified_user)):
     r = None
     try:
-        idx = random.randrange(len(app.state.OPENAI_API_BASE_URLS))
+        api_key, base_url = app.state.CLIENT_MANAGER.get_next_key_base_url()
         body = await request.body()
         name = hashlib.sha256(body).hexdigest()
 
@@ -149,12 +143,12 @@ async def speech(request: Request, user=Depends(get_verified_user)):
             return FileResponse(file_path)
 
         headers = {}
-        headers["Authorization"] = f"Bearer {app.state.OPENAI_API_KEYS[idx]}"
+        headers["Authorization"] = f"Bearer {api_key}"
         headers["Content-Type"] = "application/json"
 
         try:
             r = requests.post(
-                url=f"{app.state.OPENAI_API_BASE_URLS[idx]}/audio/speech",
+                url=f"{base_url}/audio/speech",
                 data=body,
                 headers=headers,
                 stream=True,
@@ -218,11 +212,11 @@ async def get_all_models():
     if len(app.state.OPENAI_API_KEYS) == 1 and app.state.OPENAI_API_KEYS[0] == "":
         models = {"data": []}
     else:
-        logger.debug(f"base urls: {app.state.OPENAI_API_BASE_URLS}, keys: {app.state.OPENAI_API_KEYS}")
-
+        logger.debug(f"base urls size: {len(app.state.OPENAI_API_BASE_URLS)}, "
+                     f"keys size: {len(app.state.OPENAI_API_KEYS)}")
         tasks = [
             fetch_url(f"{url}/models", app.state.OPENAI_API_KEYS[idx])
-            for idx, url in enumerate(app.state.OPENAI_API_BASE_URLS)
+            for idx, url in enumerate(list(set(app.state.OPENAI_API_BASE_URLS)))
         ]
         responses = await asyncio.gather(*tasks)
         responses = list(
@@ -287,28 +281,38 @@ async def get_models(url_idx: Optional[int] = None, user=Depends(get_current_use
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
     logger.debug(f"Proxying request to OpenAI: {path}")
-    idx = random.randrange(len(app.state.OPENAI_API_BASE_URLS))
 
     body = await request.body()
     body_dict = json.loads(body.decode("utf-8"))
-    url = app.state.OPENAI_API_BASE_URLS[idx]
-    key = app.state.OPENAI_API_KEYS[idx]
 
-    if not key:
+    if not app.state.OPENAI_API_KEYS[0]:
         raise HTTPException(status_code=401, detail=ERROR_MESSAGES.API_KEY_NOT_FOUND)
 
     try:
-        search = "serper" if SERPER_API_KEY else "duckduckgo"
-        openai_model = body_dict.get('model', 'gpt-3.5-turbo')
-        client = local_client(
-            openai_model,
-            search,
-            body_dict.get("max_tokens", 1000),
-            body_dict.get("stream", True),
-            key,
-            url,
-            temperature=body_dict.get("temperature", 0.7)
-        )
+        # Update the agent when the setting changes
+        openai_model_name = body_dict.get('model', 'gpt-3.5-turbo')
+        max_tokens = body_dict.get("max_tokens", 1024)
+        temperature = body_dict.get("temperature", 0.7)
+        if (
+                openai_model_name != app.state.AGENT_MODEL_NAME
+                or max_tokens != app.state.AGENT_MAX_TOKENS
+                or temperature != app.state.AGENT_TEMPERATURE
+        ):
+            app.state.AGENT.update_llm_params(
+                model_name=openai_model_name,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+            app.state.AGENT_MODEL_NAME = openai_model_name
+            app.state.AGENT_MAX_TOKENS = max_tokens
+            app.state.AGENT_TEMPERATURE = temperature
+
+        num_ctx = body_dict.get('num_ctx', 8192)
+        if num_ctx != app.state.AGENT_MAX_CONTEXT_TOKENS:
+            app.state.AGENT_MAX_CONTEXT_TOKENS = num_ctx
+
+        # Change api key for each request, to avoid rate limiting
+        app.state.AGENT.update_credentials()
 
         messages = body_dict.get("messages", [])
         history = []
@@ -317,18 +321,16 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
                 history.append(HumanMessage(content=message["content"]))
             elif message["role"] == "assistant":
                 history.append(AIMessage(content=message["content"]))
-        if history and len(history) > 1:
-            history = history[:-1]  # drop user input message
-        if history and len(history) > 10:
-            history = history[-10:]  # keep last 10 messages
-        input_str = ""
+        history = history[:-1]  # drop the last message, which is the current user question
+        user_question = ""
         if messages and messages[-1]["role"] == "user":
-            input_str = messages[-1]["content"]
-        events = await client.stream_run(input_str, chat_history=history)
+            user_question = messages[-1]["content"]
+
+        events = await app.state.AGENT.astream_run(user_question, chat_history=history)
         created = int(time.time())
 
         async def event_generator():
-            """组装为标准流式输出"""
+            """组装为OpenAI格式流式输出"""
             async for event in events:
                 kind = event['event']
                 if kind in ['on_tool_start', 'on_chat_model_stream']:
@@ -341,7 +343,7 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
                         "id": event.get('id', 'default_id'),
                         "object": "chat.completion.chunk",
                         "created": event.get('created', created),
-                        "model": openai_model,
+                        "model": openai_model_name,
                         "system_fingerprint": event.get('system_fingerprint', ''),
                         "choices": [
                             {

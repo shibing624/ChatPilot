@@ -1,5 +1,6 @@
 import json
 import os
+from urllib.parse import urlparse
 
 import aiohttp
 import requests
@@ -10,16 +11,13 @@ from starlette.responses import StreamingResponse, FileResponse
 
 from chatpilot.apps.auth_utils import get_admin_user
 from chatpilot.apps.misc import calculate_sha256, get_gravatar_url
-from chatpilot.config import OLLAMA_BASE_URLS, DATA_DIR, UPLOAD_DIR, DB_PATH
+from chatpilot.config import OLLAMA_BASE_URLS, UPLOAD_DIR, DB_PATH
 
 router = APIRouter()
 
 
 class UploadBlobForm(BaseModel):
     filename: str
-
-
-from urllib.parse import urlparse
 
 
 def parse_huggingface_url(hf_url):

@@ -1,4 +1,10 @@
+import base64
+import json
 import re
+import uuid
+from pathlib import Path
+from typing import Optional
+
 import requests
 from fastapi import (
     FastAPI,
@@ -8,23 +14,18 @@ from fastapi import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
-from chatpilot.constants import ERROR_MESSAGES
+from pydantic import BaseModel
+
 from chatpilot.apps.auth_utils import (
     get_current_user,
-    get_admin_user,
+    get_admin_user
 )
-from typing import Optional
-from pydantic import BaseModel
-from pathlib import Path
-import uuid
-import base64
-import json
 from chatpilot.config import (
-    OPENAI_API_BASE,
-    OPENAI_API_KEY,
+    OPENAI_API_BASE_URLS,
+    OPENAI_API_KEYS,
+    CACHE_DIR, OpenAIClientWrapper
 )
-from chatpilot.config import CACHE_DIR
-
+from chatpilot.constants import ERROR_MESSAGES
 
 IMAGE_CACHE_DIR = Path(CACHE_DIR).joinpath("./image/generations/")
 IMAGE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -39,12 +40,17 @@ app.add_middleware(
 )
 
 app.state.ENGINE = "openai"
-app.state.ENABLED = True if OPENAI_API_KEY else False
-
-app.state.OPENAI_API_BASE = OPENAI_API_BASE
-app.state.OPENAI_API_KEY = OPENAI_API_KEY
+app.state.OPENAI_API_KEYS = OPENAI_API_KEYS
+app.state.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
+if app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
+    app.state.CLIENT_MANAGER = OpenAIClientWrapper(
+        keys=OPENAI_API_KEYS, base_urls=OPENAI_API_BASE_URLS
+    )
+    app.state.ENABLED = True
+else:
+    app.state.CLIENT_MANAGER = None
+    app.state.ENABLED = False
 app.state.MODEL = "dall-e-3"
-
 
 app.state.IMAGE_SIZE = "1024x1024"
 app.state.IMAGE_STEPS = 50
@@ -77,20 +83,19 @@ class OpenAIKeyUpdateForm(BaseModel):
 
 @app.get("/key")
 async def get_openai_key(user=Depends(get_admin_user)):
-    return {"OPENAI_API_KEY": app.state.OPENAI_API_KEY}
+    return {"OPENAI_API_KEY": app.state.OPENAI_API_KEYS[0]}
 
 
 @app.post("/key/update")
 async def update_openai_key(
-    form_data: OpenAIKeyUpdateForm, user=Depends(get_admin_user)
+        form_data: OpenAIKeyUpdateForm, user=Depends(get_admin_user)
 ):
-
     if form_data.key == "":
         raise HTTPException(status_code=400, detail=ERROR_MESSAGES.API_KEY_NOT_FOUND)
 
-    app.state.OPENAI_API_KEY = form_data.key
+    app.state.OPENAI_API_KEYS[0] = form_data.key
     return {
-        "OPENAI_API_KEY": app.state.OPENAI_API_KEY,
+        "OPENAI_API_KEY": app.state.OPENAI_API_KEYS[0],
         "status": True,
     }
 
@@ -106,7 +111,7 @@ async def get_image_size(user=Depends(get_admin_user)):
 
 @app.post("/size/update")
 async def update_image_size(
-    form_data: ImageSizeUpdateForm, user=Depends(get_admin_user)
+        form_data: ImageSizeUpdateForm, user=Depends(get_admin_user)
 ):
     pattern = r"^\d+x\d+$"  # Regular expression pattern
     if re.match(pattern, form_data.size):
@@ -133,7 +138,7 @@ async def get_image_size(user=Depends(get_admin_user)):
 
 @app.post("/steps/update")
 async def update_image_size(
-    form_data: ImageStepsUpdateForm, user=Depends(get_admin_user)
+        form_data: ImageStepsUpdateForm, user=Depends(get_admin_user)
 ):
     if form_data.steps >= 0:
         app.state.IMAGE_STEPS = form_data.steps
@@ -176,7 +181,6 @@ class UpdateModelForm(BaseModel):
 
 
 def set_model_handler(model: str):
-
     if app.state.ENGINE == "openai":
         app.state.MODEL = model
         return app.state.MODEL
@@ -184,8 +188,8 @@ def set_model_handler(model: str):
 
 @app.post("/models/default/update")
 def update_default_model(
-    form_data: UpdateModelForm,
-    user=Depends(get_current_user),
+        form_data: UpdateModelForm,
+        user=Depends(get_current_user),
 ):
     return set_model_handler(form_data.model)
 
@@ -218,24 +222,24 @@ def save_b64_image(b64_str):
 
 @app.post("/generations")
 def generate_image(
-    form_data: GenerateImageForm,
-    user=Depends(get_current_user),
+        form_data: GenerateImageForm, user=Depends(get_current_user),
 ):
     r = None
     try:
         if app.state.ENGINE == "openai":
+            api_key, base_url = app.state.CLIENT_MANAGER.get_next_key_base_url()
             headers = {}
-            headers["Authorization"] = f"Bearer {app.state.OPENAI_API_KEY}"
+            headers["Authorization"] = f"Bearer {api_key}"
             headers["Content-Type"] = "application/json"
 
             data = {
-                "model": app.state.MODEL if app.state.MODEL != "" else "dall-e-2",
+                "model": app.state.MODEL if app.state.MODEL != "" else "dall-e-3",
                 "prompt": form_data.prompt,
                 "n": form_data.n,
                 "size": form_data.size if form_data.size else app.state.IMAGE_SIZE,
                 "response_format": "b64_json",
             }
-            image_url = f"{app.state.OPENAI_API_BASE}/images/generations"
+            image_url = f"{base_url}/images/generations"
             logger.debug(f"url: {image_url}, data: {data}, headers: {headers}")
             r = requests.post(
                 url=image_url,
