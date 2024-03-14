@@ -3,19 +3,21 @@
 @author:XuMing(xuming624@qq.com)
 @description: 
 """
+
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Sequence, Union
 
 import tiktoken
 from langchain.agents import AgentExecutor
 from langchain.agents.format_scratchpad.openai_tools import format_to_openai_tool_messages
 from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
+from langchain.tools import StructuredTool
+from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.tools import E2BDataAnalysisTool
 from langchain_community.utilities import GoogleSerperAPIWrapper, DuckDuckGoSearchAPIWrapper
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import Tool
-from langchain_experimental.tools import PythonREPLTool
 from langchain_openai import ChatOpenAI
 from loguru import logger
 
@@ -24,8 +26,10 @@ from chatpilot.config import (
     OPENAI_API_BASE_URLS,
     OPENAI_API_KEYS,
     E2B_API_KEY,
-    RUN_PYTHON_CODE_DESC,
+    RUN_PYTHON_CODE_TOOL_DESC,
     SYSTEM_PROMPT,
+    SEARCH_TOOL_DESC,
+    CRAWLER_TOOL_DESC,
     OpenAIClientWrapper,
 )
 
@@ -43,8 +47,8 @@ class ChatAgent:
             max_tokens: Optional[int] = None,
             max_context_tokens: int = 8192,
             streaming: bool = False,
-            openai_api_bases: List[str] = OPENAI_API_BASE_URLS,
-            openai_api_keys: List[str] = OPENAI_API_KEYS,
+            openai_api_bases: Union[str, List[str]] = OPENAI_API_BASE_URLS,
+            openai_api_keys:Union[str, List[str]] = OPENAI_API_KEYS,
             **kwargs
     ):
         """
@@ -64,8 +68,12 @@ class ChatAgent:
         :param openai_api_keys: The API keys for the OpenAI API.
         :param kwargs: Additional keyword arguments.
         """
+        if isinstance(openai_api_keys, str):
+            openai_api_keys = [openai_api_keys]
+        if isinstance(openai_api_bases, str):
+            openai_api_bases = [openai_api_bases]
         if not openai_api_keys and not openai_api_keys[0]:
-            raise Exception("Missing `OPENAI_API_KEYS` environment variable.")
+            raise Exception("`OPENAI_API_KEY` or `OPENAI_API_KEYS` environment variable must set.")
         self.max_context_tokens = max_context_tokens
         self.max_iterations = max_iterations
         self.max_execution_time = max_execution_time
@@ -128,15 +136,34 @@ class ChatAgent:
         if E2B_API_KEY:
             run_python_code_tool = E2BDataAnalysisTool(api_key=E2B_API_KEY)
         else:
+            from langchain_experimental.tools import PythonREPLTool # noqa
             run_python_code_tool = PythonREPLTool()
-        run_python_code_tool.description = RUN_PYTHON_CODE_DESC
+        run_python_code_tool.description = RUN_PYTHON_CODE_TOOL_DESC
+
+        def web_url_crawler_func(web_paths: Sequence[str] = ()) -> str:
+            """Web url crawler tool."""
+            loader = WebBaseLoader(web_paths=web_paths)
+            data = loader.load()
+            content = ""
+            for d in data:
+                title = d.metadata.get("title", "").strip()
+                desc = d.metadata.get("description", "").strip()
+                page_content = d.page_content.strip()
+                content += f"title: {title}\ndescription:{desc}\n{page_content}\n\n"
+            content_tokens = self.count_token_length(content)
+            if content_tokens > self.max_context_tokens:
+                content = content[:self.max_context_tokens]
+            return content
+
+        web_url_crawler_tool = StructuredTool.from_function(
+            func=web_url_crawler_func,
+            name="web_url_crawler",
+            description=CRAWLER_TOOL_DESC,
+        )
         tools = [
-            Tool(
-                name="Search",
-                func=self.search_engine.run,
-                description="Useful for when you need to search the web for information.",
-            ),
-            run_python_code_tool
+            Tool(name="Search", func=self.search_engine.run, description=SEARCH_TOOL_DESC),
+            run_python_code_tool,
+            web_url_crawler_tool,
         ]
         return tools
 
@@ -155,6 +182,7 @@ class ChatAgent:
                 MessagesPlaceholder(variable_name="agent_scratchpad"),
             ]
         )
+        # logger.debug(f"Initialized ChatAgent prompt: {prompt}")
         agent = (
                 {
                     "input": lambda x: x["input"],
@@ -189,16 +217,18 @@ class ChatAgent:
             max_tokens: int = None
     ):
         """Update llm params."""
-        logger.debug(
-            f"Updating LLM params: model_name={model_name}, "
-            f"temperature={temperature}, "
-            f"max_tokens={max_tokens}, "
-            f"streaming={streaming}"
-        )
-        self.llm.model_name = model_name if model_name is not None else self.llm.model_name
-        self.llm.streaming = streaming if streaming is not None else self.llm.streaming
-        self.llm.temperature = temperature if temperature is not None else self.llm.temperature
-        self.llm.max_tokens = max_tokens if max_tokens is not None else self.llm.max_tokens
+        if model_name is not None:
+            logger.debug(f"Updated model_name {self.llm.model_name} to {model_name}")
+            self.llm.model_name = model_name
+        if streaming is not None:
+            logger.debug(f"Updated streaming {self.llm.streaming} to {streaming}")
+            self.llm.streaming = streaming
+        if temperature is not None:
+            logger.debug(f"Updated temperature {self.llm.temperature} to {temperature}")
+            self.llm.temperature = temperature
+        if max_tokens is not None:
+            logger.debug(f"Updated max_tokens {self.llm.max_tokens} to {max_tokens}")
+            self.llm.max_tokens = max_tokens
 
     def count_token_length(self, text):
         """Count token length."""
@@ -267,40 +297,3 @@ class ChatAgent:
             version="v1"
         )
         return events
-
-
-if __name__ == '__main__':
-    m = ChatAgent()
-
-    questions = [
-        "how many letters in the word 'educabe'?",
-        "它是一个真的单词吗？",
-    ]
-    for i in questions:
-        print(i)
-        print(m.llm.model_name, m.llm)
-        m.run(i)
-        m.update_credentials()
-        m.update_llm_params(model_name="gpt-3.5-turbo", temperature=0.2, max_tokens=20)
-
-        print("===")
-
-
-    async def main():
-        m = ChatAgent()
-
-        questions = [
-            "俄罗斯今日新闻top3",
-            # "人体最大的器官是啥",
-            # "how many letters in the word 'educabe'?",
-            # "它是一个真的单词吗？",
-        ]
-        for i in questions:
-            print(i)
-            events = await m.astream_run(i)
-            async for event in events:
-                print(event)
-                print("===")
-                pass
-
-    asyncio.run(main())

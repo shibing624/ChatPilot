@@ -6,12 +6,12 @@
 import sys
 
 sys.path.append('..')
-from chatpilot.chat_agent import ChatAgent
+
+from chatpilot import ChatAgent
+
+m = ChatAgent()
 
 if __name__ == '__main__':
-    m = ChatAgent()
-
-
     def demo1():
         questions = [
             "俄乌战争的最新进展",
@@ -65,4 +65,42 @@ if __name__ == '__main__':
             print("===")
 
 
-    demo4()
+    def demo5():
+
+        questions = [
+            "https://python.langchain.com/docs/modules/agents/quick_start "
+            "https://python.langchain.com/docs/modules/agents/tools/custom_tools 比较2个文章的异同",
+            "how many letters in the word 'educabe'?",
+            "它是一个真的单词吗？",
+            "给出俄罗斯新闻top2",
+        ]
+        for i in questions:
+            print(i)
+            print(m.llm.model_name, m.llm)
+            m.run(i)
+            print("===")
+
+
+    def async_demo6():
+        import asyncio
+        async def d():
+            m = ChatAgent()
+
+            questions = [
+                "俄罗斯今日新闻top3",
+                # "人体最大的器官是啥",
+                # "how many letters in the word 'educabe'?",
+                # "它是一个真的单词吗？",
+            ]
+            for i in questions:
+                print(i)
+                events = await m.astream_run(i)
+                async for event in events:
+                    print(event)
+                    print("===")
+                    pass
+
+        asyncio.run(d())
+
+
+    demo1()
