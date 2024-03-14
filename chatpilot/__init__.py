@@ -10,6 +10,7 @@ from chatpilot.config import (
     OPENAI_API_KEYS,
     OPENAI_API_BASE_URLS,
     OpenAIClientWrapper,
+    SERPER_API_KEY,
 )
 from chatpilot.rag_fusion import RagFusion
 from chatpilot.version import __version__

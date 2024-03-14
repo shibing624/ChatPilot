@@ -38,7 +38,7 @@ class ChatAgent:
     def __init__(
             self,
             openai_model: str = "gpt-3.5-turbo-1106",
-            search_engine_name: str = "serper",
+            search_engine_name: str = "duckduckgo",
             verbose: bool = True,
             max_iterations: int = 3,
             max_execution_time: int = 120,
@@ -49,6 +49,7 @@ class ChatAgent:
             streaming: bool = False,
             openai_api_bases: Union[str, List[str]] = OPENAI_API_BASE_URLS,
             openai_api_keys:Union[str, List[str]] = OPENAI_API_KEYS,
+            serper_api_key: str = SERPER_API_KEY,
             **kwargs
     ):
         """
@@ -74,14 +75,22 @@ class ChatAgent:
             openai_api_bases = [openai_api_bases]
         if not openai_api_keys and not openai_api_keys[0]:
             raise Exception("`OPENAI_API_KEY` or `OPENAI_API_KEYS` environment variable must set.")
+
+        if search_engine_name == "serper" and not serper_api_key:
+            raise ValueError("Missing `SERPER_API_KEY` environment variable.")
+
         self.max_context_tokens = max_context_tokens
         self.max_iterations = max_iterations
         self.max_execution_time = max_execution_time
         self.verbose = verbose
+        self.search_engine_name = search_engine_name
+        self.serper_api_key = serper_api_key
+
         self.credentials_manager = OpenAIClientWrapper(
             keys=openai_api_keys, base_urls=openai_api_bases
         )
         openai_api_key, openai_api_base = self.credentials_manager.get_next_key_base_url()
+
         # Define llm
         self.llm = ChatOpenAI(
             model=openai_model,
@@ -95,7 +104,7 @@ class ChatAgent:
         )
 
         # Define the search engine
-        self.search_engine = self._initialize_search_engine(search_engine_name)
+        self.search_engine = self._initialize_search_engine()
 
         # Define tools
         self.tools = self._initialize_tools()
@@ -106,25 +115,21 @@ class ChatAgent:
         self.agent_executor = self._initialize_agent_executor()
         logger.debug(f"ChatAgent initialized with model: {openai_model}")
 
-    @staticmethod
-    def _initialize_search_engine(search_engine_name: str):
+    def _initialize_search_engine(self):
         """
         Initializes the search engine based on the provided name.
 
         :param search_engine_name: The name of the search engine.
         :return: An instance of the search engine.
         """
-        if search_engine_name == "serper":
-            if not SERPER_API_KEY:
-                raise ValueError("Missing `SERPER_API_KEY` environment variable.")
+        if self.search_engine_name == "serper":
             search_engine = GoogleSerperAPIWrapper()
             search_engine.gl = 'cn'
             search_engine.hl = 'zh-cn'
-            search_engine.serper_api_key = SERPER_API_KEY
+            search_engine.serper_api_key = self.serper_api_key
         else:
             search_engine = DuckDuckGoSearchAPIWrapper()
-            search_engine.region = 'cn-zh'
-        logger.debug(f"Initialized search engine: {search_engine_name}")
+        logger.debug(f"Initialized search engine: {self.search_engine_name}")
         return search_engine
 
     def _initialize_tools(self):

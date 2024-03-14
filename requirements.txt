@@ -48,4 +48,6 @@ PyJWT
 pyjwt[crypto]
 
 black
-fire
+
+# search
+duckduckgo-search~=5.1.0
