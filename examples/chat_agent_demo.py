@@ -14,6 +14,7 @@ m = ChatAgent()
 if __name__ == '__main__':
     def demo1():
         questions = [
+            "https://arxiv.org/pdf/2302.13971.pdf 分析这个论文",
             "俄乌战争的最新进展",
         ]
         for i in questions:

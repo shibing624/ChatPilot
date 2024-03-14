@@ -68,6 +68,8 @@ if app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
         streaming=app.state.AGENT_STREAMING,
         openai_api_bases=OPENAI_API_BASE_URLS,
         openai_api_keys=OPENAI_API_KEYS,
+        max_iterations=2,
+        max_execution_time=60,
     )
     # openai audio speech (TTS)
     app.state.CLIENT_MANAGER = OpenAIClientWrapper(

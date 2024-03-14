@@ -12,7 +12,7 @@ from langchain.agents import AgentExecutor
 from langchain.agents.format_scratchpad.openai_tools import format_to_openai_tool_messages
 from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
 from langchain.tools import StructuredTool
-from langchain_community.document_loaders import WebBaseLoader
+from langchain_community.document_loaders import WebBaseLoader, OnlinePDFLoader
 from langchain_community.tools import E2BDataAnalysisTool
 from langchain_community.utilities import GoogleSerperAPIWrapper, DuckDuckGoSearchAPIWrapper
 from langchain_core.messages import AIMessage, HumanMessage
@@ -145,10 +145,15 @@ class ChatAgent:
             run_python_code_tool = PythonREPLTool()
         run_python_code_tool.description = RUN_PYTHON_CODE_TOOL_DESC
 
-        def web_url_crawler_func(web_paths: Sequence[str] = ()) -> str:
+        def web_url_crawler_func(web_url: str) -> str:
             """Web url crawler tool."""
-            loader = WebBaseLoader(web_paths=web_paths)
+            web_url = web_url.strip()
+            if web_url.endswith(".pdf"):
+                loader = OnlinePDFLoader(file_path=web_url)
+            else:
+                loader = WebBaseLoader(web_paths=web_url)
             data = loader.load()
+
             content = ""
             for d in data:
                 title = d.metadata.get("title", "").strip()
