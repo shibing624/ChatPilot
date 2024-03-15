@@ -5,7 +5,7 @@
 """
 
 from datetime import datetime
-from typing import List, Optional, Sequence, Union
+from typing import List, Optional, Union
 
 import tiktoken
 from langchain.agents import AgentExecutor
@@ -31,6 +31,9 @@ from chatpilot.config import (
     SEARCH_TOOL_DESC,
     CRAWLER_TOOL_DESC,
     OpenAIClientWrapper,
+ENABLE_CRAWLER_TOOL,
+ENABLE_RUN_PYTHON_CODE_TOOL,
+ENABLE_SEARCH_TOOL,
 )
 
 
@@ -48,7 +51,7 @@ class ChatAgent:
             max_context_tokens: int = 8192,
             streaming: bool = False,
             openai_api_bases: Union[str, List[str]] = OPENAI_API_BASE_URLS,
-            openai_api_keys:Union[str, List[str]] = OPENAI_API_KEYS,
+            openai_api_keys: Union[str, List[str]] = OPENAI_API_KEYS,
             serper_api_key: str = SERPER_API_KEY,
             **kwargs
     ):
@@ -141,8 +144,8 @@ class ChatAgent:
         if E2B_API_KEY:
             run_python_code_tool = E2BDataAnalysisTool(api_key=E2B_API_KEY)
         else:
-            from langchain_experimental.tools import PythonREPLTool # noqa
-            run_python_code_tool = PythonREPLTool()
+            from langchain_experimental.tools import PythonREPLTool, PythonAstREPLTool  # noqa
+            run_python_code_tool = PythonAstREPLTool()
         run_python_code_tool.description = RUN_PYTHON_CODE_TOOL_DESC
 
         def web_url_crawler_func(web_url: str) -> str:
@@ -170,11 +173,16 @@ class ChatAgent:
             name="web_url_crawler",
             description=CRAWLER_TOOL_DESC,
         )
-        tools = [
-            run_python_code_tool,
-            web_url_crawler_tool,
-            Tool(name="Search", func=self.search_engine.run, description=SEARCH_TOOL_DESC),
-        ]
+
+        tools = []
+        if ENABLE_SEARCH_TOOL:
+            tools.append(Tool(name="Search", func=self.search_engine.run, description=SEARCH_TOOL_DESC))
+        if ENABLE_RUN_PYTHON_CODE_TOOL:
+            tools.append(run_python_code_tool)
+        if ENABLE_CRAWLER_TOOL:
+            tools.append(web_url_crawler_tool)
+        if not tools:
+            raise ValueError("No tools are enabled.")
         return tools
 
     def _initialize_agent_executor(self):
