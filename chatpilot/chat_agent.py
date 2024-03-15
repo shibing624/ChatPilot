@@ -38,7 +38,7 @@ class ChatAgent:
     def __init__(
             self,
             openai_model: str = "gpt-3.5-turbo-1106",
-            search_engine_name: str = "duckduckgo",
+            search_engine_name: str = "serper",
             verbose: bool = True,
             max_iterations: int = 3,
             max_execution_time: int = 120,
@@ -56,7 +56,7 @@ class ChatAgent:
         Initializes the ChatAgent with the given parameters.
 
         :param openai_model: The model name of OpenAI.
-        :param search_engine_name: The name of the search engine to use.
+        :param search_engine_name: The name of the search engine to use, such as "serper" or "duckduckgo".
         :param verbose: If True, enables verbose logging.
         :param max_iterations: The maximum number of iterations for the agent executor.
         :param max_execution_time: The maximum execution time in seconds.
@@ -171,9 +171,9 @@ class ChatAgent:
             description=CRAWLER_TOOL_DESC,
         )
         tools = [
-            Tool(name="Search", func=self.search_engine.run, description=SEARCH_TOOL_DESC),
             run_python_code_tool,
             web_url_crawler_tool,
+            Tool(name="Search", func=self.search_engine.run, description=SEARCH_TOOL_DESC),
         ]
         return tools
 

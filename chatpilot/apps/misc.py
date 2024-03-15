@@ -1,7 +1,7 @@
-from pathlib import Path
 import hashlib
 import re
 from datetime import timedelta
+from pathlib import Path
 from typing import Optional
 
 
@@ -39,6 +39,12 @@ def calculate_sha256_string(string):
 
 def validate_email_format(email: str) -> bool:
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        return False
+    return True
+
+
+def validate_password_format(password: str) -> bool:
+    if len(password) < 8:
         return False
     return True
 

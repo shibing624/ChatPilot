@@ -11,7 +11,7 @@ from chatpilot.apps.auth_utils import (
     get_admin_user,
     create_token,
 )
-from chatpilot.apps.misc import parse_duration, validate_email_format
+from chatpilot.apps.misc import parse_duration, validate_email_format, validate_password_format
 from chatpilot.apps.web.models.auths import (
     SigninForm,
     SignupForm,
@@ -130,8 +130,13 @@ async def signup(request: Request, form_data: SignupForm):
             status.HTTP_400_BAD_REQUEST, detail=ERROR_MESSAGES.INVALID_EMAIL_FORMAT
         )
 
+    if not validate_password_format(form_data.password):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, detail=ERROR_MESSAGES.INVALID_PASSWORD_FORMAT
+        )
+
     if Users.get_user_by_email(form_data.email.lower()):
-        raise HTTPException(400, detail=ERROR_MESSAGES.EMAIL_TAKEN)
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=ERROR_MESSAGES.EMAIL_TAKEN)
 
     try:
         role = (

@@ -9,6 +9,7 @@ import unittest
 
 sys.path.append('..')
 import numpy as np
+from chatpilot import ChatAgent
 
 
 class EmbeddingsTestCase(unittest.TestCase):
@@ -19,6 +20,72 @@ class EmbeddingsTestCase(unittest.TestCase):
         comma_res = [0.0]
         print(w, comma_res)
         self.assertEqual(comma_res[0], 0.0)
+
+    def test_tool_usage(self):
+        m = ChatAgent(max_iterations=1,
+            max_execution_time=10,)
+        print(m.llm)
+        i = "俄罗斯今日新闻top3"
+        print(i)
+        r = m.run(i, [])
+        print(r)
+        print("===")
+        #
+        # m.update_llm_params(model_name='gpt-3.5-turbo')
+        # print(m.llm)
+        # print(i)
+        # r = m.run(i, [])
+        # print(r)
+        # print("===")
+        #
+        # m.update_llm_params(model_name='gpt-3.5-turbo-16k')
+        # print(m.llm, '\ngpt-3.5-turbo-16k' )
+        # print(i)
+        # r = m.run(i, [])
+        # print(r)
+        # print("===")
+
+        # m.update_llm_params(model_name='gpt-3.5-trubo-instruct')
+        # print(m.llm, '\ngpt-3.5-trubo-instruct')
+        # print(i)
+        # r = m.run(i, [])
+        # print(r)
+        # print("===")
+
+        # m.update_llm_params(model_name='gpt-4')
+        # print(m.llm, '\ngpt-4' )
+        # print(i)
+        # r = m.run(i, [])
+        # print(r)
+        # print("===")
+        #
+        # m.update_llm_params(model_name='gpt-4-1106-preview')
+        # print(m.llm, '\ngpt-4-1106-preview' )
+        # print(i)
+        # r = m.run(i, [])
+        # print(r)
+        # print("===")
+
+        # m.update_llm_params(model_name='gpt-3.5-turbo-16k-0613')
+        # print(m.llm, '\ngpt-3.5-turbo-16k-0613')
+        # print(i)
+        # r = m.run(i, [])
+        # print(r)
+        # print("===")
+
+        # m.update_llm_params(model_name='gpt-4-32k-0613')
+        # print(m.llm, '\ngpt-4-32k-0613')
+        # print(i)
+        # r = m.run(i, [])
+        # print(r)
+        # print("===")
+        #
+        # m.update_llm_params(model_name='gpt-4-vision-preview')
+        # print(m.llm, '\ngpt-4-vision-preview')
+        # print(i)
+        # r = m.run(i, [])
+        # print(r)
+        # print("===")
 
 
 

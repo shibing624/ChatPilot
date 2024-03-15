@@ -46,10 +46,9 @@ if app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
     app.state.CLIENT_MANAGER = OpenAIClientWrapper(
         keys=OPENAI_API_KEYS, base_urls=OPENAI_API_BASE_URLS
     )
-    app.state.ENABLED = True
 else:
     app.state.CLIENT_MANAGER = None
-    app.state.ENABLED = False
+app.state.ENABLED = False
 app.state.MODEL = "dall-e-3"
 
 app.state.IMAGE_SIZE = "1024x1024"
@@ -90,10 +89,10 @@ async def get_openai_key(user=Depends(get_admin_user)):
 async def update_openai_key(
         form_data: OpenAIKeyUpdateForm, user=Depends(get_admin_user)
 ):
-    if form_data.key == "":
+    if not app.state.OPENAI_API_KEYS[0] and form_data.key == "":
         raise HTTPException(status_code=400, detail=ERROR_MESSAGES.API_KEY_NOT_FOUND)
-
-    app.state.OPENAI_API_KEYS[0] = form_data.key
+    if form_data.key:
+        app.state.OPENAI_API_KEYS[0] = form_data.key
     return {
         "OPENAI_API_KEY": app.state.OPENAI_API_KEYS[0],
         "status": True,
@@ -170,7 +169,7 @@ def get_models(user=Depends(get_current_user)):
 async def get_default_model(user=Depends(get_admin_user)):
     try:
         if app.state.ENGINE == "openai":
-            return {"model": app.state.MODEL if app.state.MODEL else "dall-e-2"}
+            return {"model": app.state.MODEL if app.state.MODEL else "dall-e-3"}
     except Exception as e:
         app.state.ENABLED = False
         raise HTTPException(status_code=400, detail=ERROR_MESSAGES.DEFAULT(e))
