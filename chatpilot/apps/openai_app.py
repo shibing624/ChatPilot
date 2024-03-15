@@ -280,9 +280,67 @@ async def get_models(url_idx: Optional[int] = None, user=Depends(get_current_use
             )
 
 
+def proxy_vision_request(path, body, method):
+    """Proxy the request to OpenAI API with a modified body for gpt-4-vision-preview model."""
+    # Try to decode the body of the request from bytes to a UTF-8 string (Require add max_token to fix gpt-4-vision)
+    try:
+        body = body.decode("utf-8")
+        body = json.loads(body)
+
+        model_idx = app.state.MODELS[body.get("model")]["urlIdx"]
+
+        # Check if the model is "gpt-4-vision-preview" and set "max_tokens" to 4000
+        # This is a workaround until OpenAI fixes the issue with this model
+        if body.get("model") == "gpt-4-vision-preview":
+            if "max_tokens" not in body:
+                body["max_tokens"] = 4000
+            print("Modified body_dict:", body)
+
+        # Fix for ChatGPT calls failing because the num_ctx key is in body
+        if "num_ctx" in body:
+            # If 'num_ctx' is in the dictionary, delete it
+            # Leaving it there generates an error with the
+            # OpenAI API (Feb 2024)
+            del body["num_ctx"]
+
+        # Convert the modified body back to JSON
+        body = json.dumps(body)
+    except json.JSONDecodeError as e:
+        logger.error(f"Error loading request body into a dictionary: {e}")
+
+    url = app.state.OPENAI_API_BASE_URLS[0]
+    key = app.state.OPENAI_API_KEYS[0]
+
+    target_url = f"{url}/{path}"
+
+    headers = {}
+    headers["Authorization"] = f"Bearer {key}"
+    headers["Content-Type"] = "application/json"
+
+    r = requests.request(
+        method=method,
+        url=target_url,
+        data=body,
+        headers=headers,
+        stream=True,
+    )
+    r.raise_for_status()
+    # Check if response is SSE
+    if "text/event-stream" in r.headers.get("Content-Type", ""):
+        return StreamingResponse(
+            r.iter_content(chunk_size=8192),
+            status_code=r.status_code,
+            headers=dict(r.headers),
+        )
+    else:
+        response_data = r.json()
+        return response_data
+
+
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
-    logger.debug(f"Proxying request to OpenAI: {path}")
+    method = request.method
+    logger.debug(f"Proxying request to OpenAI: {path}, method: {method}")
 
     body = await request.body()
     body_dict = json.loads(body.decode("utf-8"))
@@ -320,14 +378,16 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
         history = []
         for message in messages:
             if message["role"] == "user":
-                history.append(HumanMessage(content=message["content"]))
+                history.append(HumanMessage(content=str(message["content"])))
             elif message["role"] == "assistant":
-                history.append(AIMessage(content=message["content"]))
+                history.append(AIMessage(content=str(message["content"])))
         history = history[:-1]  # drop the last message, which is the current user question
         user_question = ""
         if messages and messages[-1]["role"] == "user":
             user_question = messages[-1]["content"]
 
+        if isinstance(user_question, list) and openai_model_name == "gpt-4-vision-preview":
+            return proxy_vision_request(path, body, method)
         events = await app.state.AGENT.astream_run(user_question, chat_history=history)
         created = int(time.time())
 

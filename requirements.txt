@@ -56,5 +56,4 @@ duckduckgo-search~=5.1.0
 pdf2image
 pillow_heif
 pytesseract
-#unstructured_inference
 pikepdf
