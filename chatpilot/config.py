@@ -218,8 +218,8 @@ DEFAULT_PROMPT_SUGGESTIONS = (
             "content": "计算38023*40334=?",
         },
         {
-            "title": ["北京今日新闻", "执行搜索"],
-            "content": "北京今日新闻top3",
+            "title": ["北京今日天气", "执行搜索"],
+            "content": "北京今日天气",
         },
         {
             "title": ["Show me a code snippet", "of a website's sticky header"],
