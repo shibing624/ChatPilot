@@ -34,8 +34,6 @@
 
 Official Demo: https://chat.mulanai.com
 
-HuggingFace Demo: https://huggingface.co/spaces/shibing624/ChatPilot
-
 ![](https://github.com/shibing624/ChatPilot/blob/main/docs/shot.png)
 
 ## Install
