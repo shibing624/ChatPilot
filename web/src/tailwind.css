@@ -7,7 +7,7 @@
 		font-family: -apple-system, 'Arimo', ui-sans-serif, system-ui, 'Segoe UI', Roboto, Ubuntu,
 			Cantarell, 'Noto Sans', sans-serif, 'Helvetica Neue', Arial, 'Apple Color Emoji',
 			'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-		font-size: 0.92rem; /* This is equivalent to Tailwind's 'text-base' */
+		/* font-size: 0.92rem;  This is equivalent to Tailwind's 'text-base' */
 	}
 
 	pre {
@@ -15,6 +15,6 @@
 			Cantarell, 'Noto Sans', sans-serif, 'Helvetica Neue', Arial, 'Apple Color Emoji',
 			'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 		white-space: pre-wrap;
-		font-size: 0.9rem; /* This is equivalent to Tailwind's 'text-base' */
+		/* font-size: 0.92rem; This is equivalent to Tailwind's 'text-base' */
 	}
 }
