@@ -18,17 +18,16 @@
 [![Wechat Group](https://img.shields.io/badge/wechat-group-green.svg?logo=wechat)](#Contact)
 
 
-**ChatPilot**: Chat with Agent. 复现kimi chat，基于chat agent支持联网搜索，文件、网址对话（文件，拖进来；网址，发出来），支持python代码解释器（虚拟环境），支持多轮对话，支持OpenAI API。
+**ChatPilot**: Chat with Agent. 基于chat agent实现了联网搜索，文件、网址对话功能（类kimi chat，文件，拖进来；网址，发出来），支持OpenAI API。
 
 
 ## Features
 
 - 本项目基于Agent实现了搜索问答
-- 本项目基于Agent实现了文件对话（RAG），复现 [kimi chat(文件，拖进来；网址，发出来)](https://kimi.moonshot.cn/) 的文件、网址对话功能
+- 本项目基于Agent实现了文件对话(RAG)，实现了通过URL自动解析内容功能，复现了 kimi chat(文件，拖进来；网址，发出来) 的文件、网址对话功能
 - 本项目基于Agent实现了python代码解释器，支持E2B虚拟环境和本地python编译器环境运行代码
-
-- 借鉴[open-webui](https://github.com/open-webui/open-webui)支持前后端分离，前端使用Svelte，后端使用FastAPI
-- 支持语音输入，支持图像生成
+- 支持前后端服务分离，前端使用Svelte，后端使用FastAPI
+- 支持语音输入输出，支持图像生成
 - 支持用户管理，权限控制，支持聊天记录导入导出
 
 ## Demo
