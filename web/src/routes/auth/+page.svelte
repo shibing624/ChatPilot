@@ -95,13 +95,13 @@
 					<div class="flex flex-col mt-4">
 						{#if mode === 'signup'}
 							<div>
-								<div class=" text-sm font-semibold text-left mb-1">Email</div>
+								<div class=" text-sm font-semibold text-left mb-1">Name</div>
 								<input
-									bind:value={email}
-									type="email"
+									bind:value={name}
+									type="text"
 									class=" border px-4 py-2.5 rounded-2xl w-full text-sm"
-									autocomplete="email"
-									placeholder="Enter Your Email"
+									autocomplete="name"
+									placeholder="Enter Your Full Name"
 									required
 								/>
 							</div>
@@ -110,13 +110,13 @@
 						{/if}
 
 						<div class="mb-2">
-							<div class=" text-sm font-semibold text-left mb-1">Name</div>
+							<div class=" text-sm font-semibold text-left mb-1">Email</div>
 							<input
-								bind:value={name}
-								type="text"
+								bind:value={email}
+								type="email"
 								class=" border px-4 py-2.5 rounded-2xl w-full text-sm"
-								autocomplete="name"
-								placeholder="Enter Your Full Name"
+								autocomplete="email"
+								placeholder="Enter Your Email"
 								required
 							/>
 						</div>

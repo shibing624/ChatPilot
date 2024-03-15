@@ -7,9 +7,7 @@ import json
 import os
 from pathlib import Path
 
-import chromadb
 import yaml
-from chromadb import Settings
 from loguru import logger
 from openai import OpenAI
 
@@ -146,10 +144,16 @@ E2B_API_KEY = os.environ.get("E2B_API_KEY", None)
 CHROMA_DATA_PATH = f"{DATA_DIR}/vector_db"
 # openai embedding is support, text2vec and sentence-transformers are also available
 RAG_EMBEDDING_MODEL = os.environ.get("RAG_EMBEDDING_MODEL", "text-embedding-ada-002")
-CHROMA_CLIENT = chromadb.PersistentClient(
-    path=CHROMA_DATA_PATH,
-    settings=Settings(allow_reset=True, anonymized_telemetry=False),
-)
+try:
+    import chromadb
+    from chromadb import Settings
+    CHROMA_CLIENT = chromadb.PersistentClient(
+        path=CHROMA_DATA_PATH,
+        settings=Settings(allow_reset=True, anonymized_telemetry=False),
+    )
+except Exception as e:
+    CHROMA_CLIENT = None
+    logger.warning(f"ChromaDB client failed to initialize: {e}, ignore it if you don't use RAG.")
 
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 100
