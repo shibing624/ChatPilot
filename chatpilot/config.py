@@ -15,7 +15,6 @@ from chatpilot.constants import ERROR_MESSAGES
 
 pwd_path = os.path.abspath(os.path.dirname(__file__))
 WEBUI_NAME = "ChatPilot"
-ENV = os.environ.get("ENV", "dev")
 DOTENV_PATH = os.getenv("DOTENV_PATH", os.path.join(pwd_path, "../.env"))
 try:
     from dotenv import load_dotenv  # noqa
@@ -27,7 +26,7 @@ except ImportError:
 
 DATA_DIR = str(os.path.expanduser(os.getenv("DATA_DIR", "~/.cache/chatpilot/data")))
 DB_PATH = f"{DATA_DIR}/web.db"
-
+ENV = os.environ.get("ENV", "dev")
 # Frontend build dir, which is npm build dir
 FRONTEND_BUILD_DIR = str(Path(os.getenv("FRONTEND_BUILD_DIR", os.path.join(pwd_path, "../web/build"))))
 # Frontend static dir, which is for static files like favicon, logo, etc
