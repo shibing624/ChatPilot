@@ -87,6 +87,43 @@ bash start.sh
 好了，现在你的应用正在运行：http://0.0.0.0:8080 Enjoy! 😄
 
 
+
+### 命令行模式（CLI）
+
+支持命令行对话。
+
+code: [cli.py](https://github.com/shibing624/ChatPilot/blob/main/chatpilot/cli.py)
+
+```
+> chatpilot -h                                    
+usage: __main__.py [-h] [--model MODEL] [--search SEARCH] [--openai_api_key OPENAI_API_KEY] [--openai_api_base OPENAI_API_BASE] [--serper_api_key SERPER_API_KEY]
+
+
+
+chatpilot cli
+
+
+options:
+  -h, --help            show this help message and exit
+  --model MODEL         openai model name
+  --search SEARCH       search engine name, e.g. duckduckgo, serper
+  --openai_api_key OPENAI_API_KEY
+                        openai api key
+  --openai_api_base OPENAI_API_BASE
+                        openai api base url
+  --serper_api_key SERPER_API_KEY
+                        serper api key
+```
+
+run：
+
+```shell
+pip install chatpilot -U
+chatpilot
+```
+
+> User: 输入问题, 如："一句话介绍北京"。
+
 ## Contact
 
 - Issue(建议)：[![GitHub issues](https://img.shields.io/github/issues/shibing624/ChatPilot.svg)](https://github.com/shibing624/ChatPilot/issues)
