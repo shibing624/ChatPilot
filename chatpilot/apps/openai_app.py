@@ -325,6 +325,8 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
     try:
         # Get the next key and base URL from the client manager
         api_key, base_url = app.state.CLIENT_MANAGER.get_next_key_base_url()
+        show_api_key = api_key[:4] + "..." + api_key[-4:]
+        logger.debug(f"Using API key: {show_api_key}, base URL: {base_url}")
 
         openai_model = body_dict.get('model', 'gpt-3.5-turbo')
         max_tokens = body_dict.get("max_tokens", 1024)
