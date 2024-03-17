@@ -4,10 +4,9 @@
 @description: Cli for chatpilot
 """
 import argparse
-import sys
 
-sys.path.append('..')
-from chatpilot import ChatAgent, OPENAI_API_KEY, OPENAI_API_BASE, SERPER_API_KEY
+from .chat_agent import ChatAgent
+from .config import OPENAI_API_KEY, OPENAI_API_BASE, SERPER_API_KEY
 
 
 def main():
@@ -22,8 +21,8 @@ def main():
     m = ChatAgent(
         openai_model=args.model,
         search_engine_name=args.search,
-        openai_api_bases=args.openai_api_base,
-        openai_api_keys=args.openai_api_key,
+        openai_api_base=args.openai_api_base,
+        openai_api_key=args.openai_api_key,
         serper_api_key=args.serper_api_key
     )
 
