@@ -257,7 +257,7 @@ async def get_models(url_idx: Optional[int] = None, user=Depends(get_current_use
             )
 
 
-def proxy_vision_request(key, url, path, body, method):
+def proxy_vision_request(api_key, base_url, path, body, method):
     """Proxy the request to OpenAI API with a modified body for gpt-4-vision-preview model."""
     # Try to decode the body of the request from bytes to a UTF-8 string (Require add max_token to fix gpt-4-vision)
     try:
@@ -285,10 +285,10 @@ def proxy_vision_request(key, url, path, body, method):
     except json.JSONDecodeError as e:
         logger.error(f"Error loading request body into a dictionary: {e}")
 
-    target_url = f"{url}/{path}"
+    target_url = f"{base_url}/{path}"
 
     headers = {}
-    headers["Authorization"] = f"Bearer {key}"
+    headers["Authorization"] = f"Bearer {api_key}"
     headers["Content-Type"] = "application/json"
 
     r = requests.request(
@@ -324,7 +324,7 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
 
     try:
         # Get the next key and base URL from the client manager
-        key, url = app.state.CLIENT_MANAGER.get_next_key_base_url()
+        api_key, base_url = app.state.CLIENT_MANAGER.get_next_key_base_url()
 
         openai_model = body_dict.get('model', 'gpt-3.5-turbo')
         max_tokens = body_dict.get("max_tokens", 1024)
@@ -343,7 +343,7 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
             user_question = messages[-1]["content"]
 
         if isinstance(user_question, list) and openai_model == "gpt-4-vision-preview":
-            return proxy_vision_request(key, url, path, body, method)
+            return proxy_vision_request(api_key, base_url, path, body, method)
 
         # Create a new ChatAgent instance for each request
         chat_agent = ChatAgent(
@@ -356,8 +356,8 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
             streaming=True,
             max_iterations=2,
             max_execution_time=60,
-            openai_api_base=key,
-            openai_api_key=url,
+            openai_api_base=base_url,
+            openai_api_key=api_key,
             serper_api_key=SERPER_API_KEY,
         )
         events = await chat_agent.astream_run(user_question, chat_history=history)

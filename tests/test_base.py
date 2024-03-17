@@ -24,7 +24,7 @@ class EmbeddingsTestCase(unittest.TestCase):
         m = ChatAgent(max_iterations=1,
                       max_execution_time=30, )
         print(m.llm)
-        i = "What is the capital of California?"
+        i = "hi?"
         print(i)
         r = m.run(i, [])
         print(r)
