@@ -52,20 +52,14 @@ app.state.OPENAI_API_KEYS = OPENAI_API_KEYS
 app.state.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
 if app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
     # chat agent
-    app.state.AGENT_MODEL_NAME = "gpt-3.5-turbo"
-    app.state.AGENT_SEARCH_ENGINE_NAME = "serper" if SERPER_API_KEY else "duckduckgo"
-    app.state.AGENT_TEMPERATURE = 0.7
-    app.state.AGENT_MAX_TOKENS = 1024
-    app.state.AGENT_MAX_CONTEXT_TOKENS = 8192
-    app.state.AGENT_STREAMING = True
     app.state.AGENT = ChatAgent(
-        openai_model=app.state.AGENT_MODEL_NAME,
-        search_engine_name=app.state.AGENT_SEARCH_ENGINE_NAME,
+        openai_model="gpt-3.5-turbo",
+        search_engine_name="serper" if SERPER_API_KEY else "duckduckgo",
         verbose=True,
-        temperature=app.state.AGENT_TEMPERATURE,
-        max_tokens=app.state.AGENT_MAX_TOKENS,
-        max_context_tokens=app.state.AGENT_MAX_CONTEXT_TOKENS,
-        streaming=app.state.AGENT_STREAMING,
+        temperature=0.7,
+        max_tokens=1024,
+        max_context_tokens=1024,
+        streaming=True,
         openai_api_bases=OPENAI_API_BASE_URLS,
         openai_api_keys=OPENAI_API_KEYS,
         max_iterations=2,
@@ -350,29 +344,19 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
 
     try:
         # Update the agent when the setting changes
-        openai_model_name = body_dict.get('model', 'gpt-3.5-turbo')
+        openai_model = body_dict.get('model', 'gpt-3.5-turbo')
         max_tokens = body_dict.get("max_tokens", 1024)
         temperature = body_dict.get("temperature", 0.7)
-        if (
-                openai_model_name != app.state.AGENT_MODEL_NAME
-                or max_tokens != app.state.AGENT_MAX_TOKENS
-                or temperature != app.state.AGENT_TEMPERATURE
-        ):
-            app.state.AGENT.update_llm_params(
-                model_name=openai_model_name,
-                temperature=temperature,
-                max_tokens=max_tokens
-            )
-            app.state.AGENT_MODEL_NAME = openai_model_name
-            app.state.AGENT_MAX_TOKENS = max_tokens
-            app.state.AGENT_TEMPERATURE = temperature
 
-        num_ctx = body_dict.get('num_ctx', 8192)
-        if num_ctx != app.state.AGENT_MAX_CONTEXT_TOKENS:
-            app.state.AGENT_MAX_CONTEXT_TOKENS = num_ctx
+        app.state.AGENT.update_llm(
+            openai_model=openai_model,
+            temperature=temperature,
+            max_tokens=max_tokens
+        )
 
-        # Change api key for each request, to avoid rate limiting
-        app.state.AGENT.update_credentials()
+        num_ctx = body_dict.get('num_ctx', 1024)
+        if num_ctx != app.state.AGENT.max_context_tokens:
+            app.state.AGENT.max_context_tokens = num_ctx
 
         messages = body_dict.get("messages", [])
         history = []
@@ -386,7 +370,7 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
         if messages and messages[-1]["role"] == "user":
             user_question = messages[-1]["content"]
 
-        if isinstance(user_question, list) and openai_model_name == "gpt-4-vision-preview":
+        if isinstance(user_question, list) and openai_model == "gpt-4-vision-preview":
             return proxy_vision_request(path, body, method)
         events = await app.state.AGENT.astream_run(user_question, chat_history=history)
         created = int(time.time())
@@ -405,7 +389,7 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
                         "id": event.get('id', 'default_id'),
                         "object": "chat.completion.chunk",
                         "created": event.get('created', created),
-                        "model": openai_model_name,
+                        "model": openai_model,
                         "system_fingerprint": event.get('system_fingerprint', ''),
                         "choices": [
                             {

@@ -31,9 +31,9 @@ from chatpilot.config import (
     SEARCH_TOOL_DESC,
     CRAWLER_TOOL_DESC,
     OpenAIClientWrapper,
-ENABLE_CRAWLER_TOOL,
-ENABLE_RUN_PYTHON_CODE_TOOL,
-ENABLE_SEARCH_TOOL,
+    ENABLE_CRAWLER_TOOL,
+    ENABLE_RUN_PYTHON_CODE_TOOL,
+    ENABLE_SEARCH_TOOL,
 )
 
 
@@ -105,6 +105,13 @@ class ChatAgent:
             streaming=streaming,
             **kwargs
         )
+        self.openai_model = openai_model
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        self.max_execution_time = max_execution_time
+        self.streaming = streaming
+        self.openai_api_key = openai_api_key
+        self.openai_api_base = openai_api_base
 
         # Define the search engine
         self.search_engine = self._initialize_search_engine()
@@ -221,36 +228,54 @@ class ChatAgent:
             handle_parsing_errors=True,
         ).with_config({"run_name": "ChatAgent"})
 
-    def update_credentials(self):
-        """Update credentials."""
-        new_key, new_base_url = self.credentials_manager.get_next_key_base_url()
-        self.llm.openai_api_key = new_key
-        self.llm.openai_api_base = new_base_url
-
-    def update_llm_params(
+    def update_llm(
             self,
-            model_name: str = None,
-            streaming: bool = None,
+            openai_model: str = None,
             temperature: float = None,
-            max_tokens: int = None
+            max_tokens: int = None,
+            streaming: bool = None
     ):
-        """Update llm params."""
-        if model_name is not None:
-            logger.debug(f"Updated model_name {self.llm.model_name} to {model_name}")
-            self.llm.model_name = model_name
-        if streaming is not None:
-            logger.debug(f"Updated streaming {self.llm.streaming} to {streaming}")
-            self.llm.streaming = streaming
+        """Update LLM."""
+        new_key, new_base_url = self.credentials_manager.get_next_key_base_url()
+        if new_key != self.openai_api_key:
+            # mask api key to show
+            show_old_key = self.openai_api_key[:4] + "..." + self.openai_api_key[-4:]
+            show_new_key = new_key[:4] + "..." + new_key[-4:]
+            logger.debug(f"Updated openai_api_key {show_old_key} to {show_new_key}")
+            self.openai_api_key = new_key
+        if new_base_url != self.openai_api_base:
+            logger.debug(f"Updated openai_api_base {self.openai_api_base} to {new_base_url}")
+            self.openai_api_base = new_base_url
+        if openai_model is not None:
+            logger.debug(f"Updated model_name {self.openai_model} to {openai_model}")
+            self.openai_model = openai_model
         if temperature is not None:
-            logger.debug(f"Updated temperature {self.llm.temperature} to {temperature}")
-            self.llm.temperature = temperature
+            logger.debug(f"Updated temperature {self.temperature} to {temperature}")
+            self.temperature = temperature
         if max_tokens is not None:
-            logger.debug(f"Updated max_tokens {self.llm.max_tokens} to {max_tokens}")
-            self.llm.max_tokens = max_tokens
+            logger.debug(f"Updated max_tokens {self.max_tokens} to {max_tokens}")
+            self.max_tokens = max_tokens
+        if streaming is not None:
+            logger.debug(f"Updated streaming {self.streaming} to {streaming}")
+            self.streaming = streaming
+
+        self.llm = ChatOpenAI(
+            model=self.openai_model,
+            temperature=self.temperature,
+            openai_api_base=self.openai_api_base,
+            openai_api_key=self.openai_api_key,
+            max_tokens=self.max_tokens,
+            timeout=self.max_execution_time,
+            streaming=self.streaming,
+        )
 
     def count_token_length(self, text):
         """Count token length."""
-        encoding = tiktoken.get_encoding("cl100k_base")
+        try:
+            encoding = tiktoken.encoding_for_model(self.openai_model)
+        except KeyError:
+            model = "cl100k_base"
+            encoding = tiktoken.get_encoding(model)
         length = len(encoding.encode(text))
         return length
 

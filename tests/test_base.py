@@ -8,7 +8,6 @@ import sys
 import unittest
 
 sys.path.append('..')
-import numpy as np
 from chatpilot import ChatAgent
 
 
@@ -23,20 +22,28 @@ class EmbeddingsTestCase(unittest.TestCase):
 
     def test_tool_usage(self):
         m = ChatAgent(max_iterations=1,
-            max_execution_time=10,)
+                      max_execution_time=30, )
         print(m.llm)
-        i = "俄罗斯今日新闻top3"
+        i = "What is the capital of California?"
         print(i)
         r = m.run(i, [])
         print(r)
         print("===")
-        #
-        # m.update_llm_params(model_name='gpt-3.5-turbo')
+
+        # m.update_llm(openai_model='gpt-3.5-turbo')
         # print(m.llm)
         # print(i)
         # r = m.run(i, [])
         # print(r)
         # print("===")
+        #
+        # m.update_llm()
+        # print(m.llm)
+        # print(i)
+        # r = m.run(i, [])
+        # print(r)
+        # print("===")
+
         #
         # m.update_llm_params(model_name='gpt-3.5-turbo-16k')
         # print(m.llm, '\ngpt-3.5-turbo-16k' )
@@ -86,7 +93,6 @@ class EmbeddingsTestCase(unittest.TestCase):
         # r = m.run(i, [])
         # print(r)
         # print("===")
-
 
 
 if __name__ == '__main__':
