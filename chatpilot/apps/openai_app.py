@@ -51,28 +51,11 @@ app.state.MODEL_FILTER_LIST = MODEL_FILTER_LIST
 app.state.OPENAI_API_KEYS = OPENAI_API_KEYS
 app.state.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
 if app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
-    # chat agent
-    app.state.AGENT = ChatAgent(
-        openai_model="gpt-3.5-turbo",
-        search_engine_name="serper" if SERPER_API_KEY else "duckduckgo",
-        verbose=True,
-        temperature=0.7,
-        max_tokens=1024,
-        max_context_tokens=1024,
-        streaming=True,
-        openai_api_bases=OPENAI_API_BASE_URLS,
-        openai_api_keys=OPENAI_API_KEYS,
-        max_iterations=2,
-        max_execution_time=60,
-    )
     # openai audio speech (TTS)
     app.state.CLIENT_MANAGER = OpenAIClientWrapper(
         keys=OPENAI_API_KEYS, base_urls=OPENAI_API_BASE_URLS
     )
-
-
 else:
-    app.state.AGENT = None
     app.state.CLIENT_MANAGER = None
 
 app.state.MODELS = {}
@@ -274,7 +257,7 @@ async def get_models(url_idx: Optional[int] = None, user=Depends(get_current_use
             )
 
 
-def proxy_vision_request(path, body, method):
+def proxy_vision_request(key, url, path, body, method):
     """Proxy the request to OpenAI API with a modified body for gpt-4-vision-preview model."""
     # Try to decode the body of the request from bytes to a UTF-8 string (Require add max_token to fix gpt-4-vision)
     try:
@@ -301,9 +284,6 @@ def proxy_vision_request(path, body, method):
         body = json.dumps(body)
     except json.JSONDecodeError as e:
         logger.error(f"Error loading request body into a dictionary: {e}")
-
-    url = app.state.OPENAI_API_BASE_URLS[0]
-    key = app.state.OPENAI_API_KEYS[0]
 
     target_url = f"{url}/{path}"
 
@@ -343,21 +323,13 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
         raise HTTPException(status_code=401, detail=ERROR_MESSAGES.API_KEY_NOT_FOUND)
 
     try:
-        # Update the agent when the setting changes
+        # Get the next key and base URL from the client manager
+        key, url = app.state.CLIENT_MANAGER.get_next_key_base_url()
+
         openai_model = body_dict.get('model', 'gpt-3.5-turbo')
         max_tokens = body_dict.get("max_tokens", 1024)
         temperature = body_dict.get("temperature", 0.7)
-
-        app.state.AGENT.update_llm(
-            openai_model=openai_model,
-            temperature=temperature,
-            max_tokens=max_tokens
-        )
-
         num_ctx = body_dict.get('num_ctx', 1024)
-        if num_ctx != app.state.AGENT.max_context_tokens:
-            app.state.AGENT.max_context_tokens = num_ctx
-
         messages = body_dict.get("messages", [])
         history = []
         for message in messages:
@@ -371,8 +343,24 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
             user_question = messages[-1]["content"]
 
         if isinstance(user_question, list) and openai_model == "gpt-4-vision-preview":
-            return proxy_vision_request(path, body, method)
-        events = await app.state.AGENT.astream_run(user_question, chat_history=history)
+            return proxy_vision_request(key, url, path, body, method)
+
+        # Create a new ChatAgent instance for each request
+        chat_agent = ChatAgent(
+            openai_model=openai_model,
+            search_engine_name="serper" if SERPER_API_KEY else "duckduckgo",
+            verbose=True,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            max_context_tokens=num_ctx,
+            streaming=True,
+            max_iterations=2,
+            max_execution_time=60,
+            openai_api_base=key,
+            openai_api_key=url,
+            serper_api_key=SERPER_API_KEY,
+        )
+        events = await chat_agent.astream_run(user_question, chat_history=history)
         created = int(time.time())
 
         async def event_generator():

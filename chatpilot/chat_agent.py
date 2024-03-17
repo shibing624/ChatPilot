@@ -23,14 +23,13 @@ from loguru import logger
 
 from chatpilot.config import (
     SERPER_API_KEY,
-    OPENAI_API_BASE_URLS,
-    OPENAI_API_KEYS,
+    OPENAI_API_BASE,
+    OPENAI_API_KEY,
     E2B_API_KEY,
     RUN_PYTHON_CODE_TOOL_DESC,
     SYSTEM_PROMPT,
     SEARCH_TOOL_DESC,
     CRAWLER_TOOL_DESC,
-    OpenAIClientWrapper,
     ENABLE_CRAWLER_TOOL,
     ENABLE_RUN_PYTHON_CODE_TOOL,
     ENABLE_SEARCH_TOOL,
@@ -50,8 +49,8 @@ class ChatAgent:
             max_tokens: Optional[int] = None,
             max_context_tokens: int = 8192,
             streaming: bool = False,
-            openai_api_bases: Union[str, List[str]] = OPENAI_API_BASE_URLS,
-            openai_api_keys: Union[str, List[str]] = OPENAI_API_KEYS,
+            openai_api_base: str = OPENAI_API_BASE,
+            openai_api_key: str = OPENAI_API_KEY,
             serper_api_key: str = SERPER_API_KEY,
             **kwargs
     ):
@@ -68,15 +67,11 @@ class ChatAgent:
         :param max_tokens: The maximum number of tokens for the OpenAI model.
         :param streaming: If True, enables streaming mode.
         :param max_context_tokens: The maximum number of context tokens to use.
-        :param openai_api_bases: The base URLs for the OpenAI API.
-        :param openai_api_keys: The API keys for the OpenAI API.
+        :param openai_api_base: The base URLs for the OpenAI API.
+        :param openai_api_key: The API keys for the OpenAI API.
         :param kwargs: Additional keyword arguments.
         """
-        if isinstance(openai_api_keys, str):
-            openai_api_keys = [openai_api_keys]
-        if isinstance(openai_api_bases, str):
-            openai_api_bases = [openai_api_bases]
-        if not openai_api_keys and not openai_api_keys[0]:
+        if not openai_api_key:
             raise Exception("`OPENAI_API_KEY` or `OPENAI_API_KEYS` environment variable must set.")
 
         if search_engine_name == "serper" and not serper_api_key:
@@ -88,11 +83,6 @@ class ChatAgent:
         self.verbose = verbose
         self.search_engine_name = search_engine_name
         self.serper_api_key = serper_api_key
-
-        self.credentials_manager = OpenAIClientWrapper(
-            keys=openai_api_keys, base_urls=openai_api_bases
-        )
-        openai_api_key, openai_api_base = self.credentials_manager.get_next_key_base_url()
 
         # Define llm
         self.llm = ChatOpenAI(
@@ -227,47 +217,6 @@ class ChatAgent:
             max_execution_time=self.max_execution_time,
             handle_parsing_errors=True,
         ).with_config({"run_name": "ChatAgent"})
-
-    def update_llm(
-            self,
-            openai_model: str = None,
-            temperature: float = None,
-            max_tokens: int = None,
-            streaming: bool = None
-    ):
-        """Update LLM."""
-        new_key, new_base_url = self.credentials_manager.get_next_key_base_url()
-        if new_key != self.openai_api_key:
-            # mask api key to show
-            show_old_key = self.openai_api_key[:4] + "..." + self.openai_api_key[-4:]
-            show_new_key = new_key[:4] + "..." + new_key[-4:]
-            logger.debug(f"Updated openai_api_key {show_old_key} to {show_new_key}")
-            self.openai_api_key = new_key
-        if new_base_url != self.openai_api_base:
-            logger.debug(f"Updated openai_api_base {self.openai_api_base} to {new_base_url}")
-            self.openai_api_base = new_base_url
-        if openai_model is not None and openai_model != self.openai_model:
-            logger.debug(f"Updated model_name {self.openai_model} to {openai_model}")
-            self.openai_model = openai_model
-        if temperature is not None and temperature != self.temperature:
-            logger.debug(f"Updated temperature {self.temperature} to {temperature}")
-            self.temperature = temperature
-        if max_tokens is not None and max_tokens != self.max_tokens:
-            logger.debug(f"Updated max_tokens {self.max_tokens} to {max_tokens}")
-            self.max_tokens = max_tokens
-        if streaming is not None and streaming != self.streaming:
-            logger.debug(f"Updated streaming {self.streaming} to {streaming}")
-            self.streaming = streaming
-
-        self.llm = ChatOpenAI(
-            model=self.openai_model,
-            temperature=self.temperature,
-            openai_api_base=self.openai_api_base,
-            openai_api_key=self.openai_api_key,
-            max_tokens=self.max_tokens,
-            timeout=self.max_execution_time,
-            streaming=self.streaming,
-        )
 
     def count_token_length(self, text):
         """Count token length."""
