@@ -179,7 +179,7 @@ class ChatAgent:
         if ENABLE_CRAWLER_TOOL:
             tools.append(web_url_crawler_tool)
         if not tools:
-            raise ValueError("No tools are enabled.")
+            raise ValueError("No tools are enabled, must enable at least one tool.")
         return tools
 
     def _initialize_agent_executor(self):
@@ -188,10 +188,10 @@ class ChatAgent:
 
         :return: An instance of AgentExecutor.
         """
-        current_date = datetime.now().strftime("%Y-%m-%d")
+
         prompt = ChatPromptTemplate.from_messages(
             [
-                ("system", SYSTEM_PROMPT.format(current_date=current_date)),
+                ("system", SYSTEM_PROMPT),
                 MessagesPlaceholder(variable_name="chat_history"),
                 ("user", "{input}"),
                 MessagesPlaceholder(variable_name="agent_scratchpad"),
