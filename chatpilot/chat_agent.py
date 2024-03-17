@@ -246,16 +246,16 @@ class ChatAgent:
         if new_base_url != self.openai_api_base:
             logger.debug(f"Updated openai_api_base {self.openai_api_base} to {new_base_url}")
             self.openai_api_base = new_base_url
-        if openai_model is not None:
+        if openai_model is not None and openai_model != self.openai_model:
             logger.debug(f"Updated model_name {self.openai_model} to {openai_model}")
             self.openai_model = openai_model
-        if temperature is not None:
+        if temperature is not None and temperature != self.temperature:
             logger.debug(f"Updated temperature {self.temperature} to {temperature}")
             self.temperature = temperature
-        if max_tokens is not None:
+        if max_tokens is not None and max_tokens != self.max_tokens:
             logger.debug(f"Updated max_tokens {self.max_tokens} to {max_tokens}")
             self.max_tokens = max_tokens
-        if streaming is not None:
+        if streaming is not None and streaming != self.streaming:
             logger.debug(f"Updated streaming {self.streaming} to {streaming}")
             self.streaming = streaming
 
