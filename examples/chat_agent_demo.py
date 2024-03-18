@@ -82,7 +82,7 @@ if __name__ == '__main__':
             print("===")
 
 
-    def async_demo6():
+    def demo6():
         import asyncio
         async def d():
             m = ChatAgent()

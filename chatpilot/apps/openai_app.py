@@ -228,15 +228,15 @@ async def get_models(url_idx: Optional[int] = None, user=Depends(get_current_use
                 return models
         return models
     else:
-        url = app.state.OPENAI_API_BASE_URLS[url_idx]
         try:
+            url = app.state.OPENAI_API_BASE_URLS[url_idx]
             r = requests.request(method="GET", url=f"{url}/models")
             r.raise_for_status()
 
             response_data = r.json()
             if url:
                 response_data["data"] = list(
-                    filter(lambda model: "gpt" in model["id"], response_data["data"])
+                    filter(lambda model: model["id"], response_data["data"])
                 )
 
             return response_data
@@ -257,7 +257,7 @@ async def get_models(url_idx: Optional[int] = None, user=Depends(get_current_use
             )
 
 
-def proxy_vision_request(api_key, base_url, path, body, method):
+def proxy_other_request(api_key, base_url, path, body, method):
     """Proxy the request to OpenAI API with a modified body for gpt-4-vision-preview model."""
     # Try to decode the body of the request from bytes to a UTF-8 string (Require add max_token to fix gpt-4-vision)
     try:
@@ -344,8 +344,8 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
         if messages and messages[-1]["role"] == "user":
             user_question = messages[-1]["content"]
 
-        if isinstance(user_question, list) and openai_model == "gpt-4-vision-preview":
-            return proxy_vision_request(api_key, base_url, path, body, method)
+        if not isinstance(user_question, str):
+            return proxy_other_request(api_key, base_url, path, body, method)
 
         # Create a new ChatAgent instance for each request
         chat_agent = ChatAgent(
