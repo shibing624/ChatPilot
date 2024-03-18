@@ -333,12 +333,15 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
         temperature = body_dict.get("temperature", 0.7)
         num_ctx = body_dict.get('num_ctx', 1024)
         messages = body_dict.get("messages", [])
+        system_prompt = ""
         history = []
         for message in messages:
             if message["role"] == "user":
                 history.append(HumanMessage(content=str(message["content"])))
             elif message["role"] == "assistant":
                 history.append(AIMessage(content=str(message["content"])))
+            elif message["role"] == "system":
+                system_prompt = str(message["content"])
         history = history[:-1]  # drop the last message, which is the current user question
         user_question = ""
         if messages and messages[-1]["role"] == "user":
@@ -361,6 +364,7 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
             openai_api_base=base_url,
             openai_api_key=api_key,
             serper_api_key=SERPER_API_KEY,
+            system_prompt=system_prompt,
         )
         events = await chat_agent.astream_run(user_question, chat_history=history)
         created = int(time.time())

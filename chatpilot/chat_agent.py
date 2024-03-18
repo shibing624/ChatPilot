@@ -52,6 +52,7 @@ class ChatAgent:
             openai_api_base: str = OPENAI_API_BASE,
             openai_api_key: str = OPENAI_API_KEY,
             serper_api_key: str = SERPER_API_KEY,
+            system_prompt: str = SYSTEM_PROMPT,
             **kwargs
     ):
         """
@@ -83,6 +84,7 @@ class ChatAgent:
         self.verbose = verbose
         self.search_engine_name = search_engine_name
         self.serper_api_key = serper_api_key
+        self.system_prompt = system_prompt if system_prompt else SYSTEM_PROMPT
 
         # Define llm
         self.llm = ChatOpenAI(
@@ -191,7 +193,7 @@ class ChatAgent:
 
         prompt = ChatPromptTemplate.from_messages(
             [
-                ("system", SYSTEM_PROMPT),
+                ("system", self.system_prompt),
                 MessagesPlaceholder(variable_name="chat_history"),
                 ("user", "{input}"),
                 MessagesPlaceholder(variable_name="agent_scratchpad"),
@@ -277,6 +279,7 @@ class ChatAgent:
         :param chat_history: Optional; the current chat history.
         :return: An asynchronous generator of events.
         """
+
         chat_history = chat_history if chat_history is not None else self.chat_history
         if chat_history:
             chat_history = (
