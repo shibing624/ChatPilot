@@ -314,7 +314,8 @@ def proxy_other_request(api_key, base_url, path, body, method):
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
     method = request.method
-    logger.debug(f"Proxying request to OpenAI: {path}, method: {method}")
+    logger.debug(f"Proxying request to OpenAI: {path}, method: {method}, "
+                 f"user: {user.id} {user.name} {user.email} {user.role}")
 
     body = await request.body()
     body_dict = json.loads(body.decode("utf-8"))
