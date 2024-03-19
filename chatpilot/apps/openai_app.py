@@ -21,7 +21,6 @@ from pydantic import BaseModel
 
 from chatpilot.apps.auth_utils import (
     get_current_user,
-    get_verified_user,
     get_admin_user,
 )
 from chatpilot.chat_agent import ChatAgent
@@ -105,7 +104,7 @@ async def update_openai_key(form_data: KeysUpdateForm, user=Depends(get_admin_us
 
 
 @app.post("/audio/speech")
-async def speech(request: Request, user=Depends(get_verified_user)):
+async def speech(request: Request, user=Depends(get_current_user)):
     r = None
     try:
         api_key, base_url = app.state.CLIENT_MANAGER.get_next_key_base_url()
@@ -312,7 +311,7 @@ def proxy_other_request(api_key, base_url, path, body, method):
 
 
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
+async def proxy(path: str, request: Request, user=Depends(get_current_user)):
     method = request.method
     logger.debug(f"Proxying request to OpenAI: {path}, method: {method}, "
                  f"user: {user.id} {user.name} {user.email} {user.role}")
