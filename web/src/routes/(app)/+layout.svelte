@@ -229,8 +229,7 @@
 
 							<div class=" mt-4 text-center text-sm dark:text-gray-200 w-full">
 								Your account status is currently pending activation. To access the WebUI, please
-								reach out to the administrator. Admins can manage user statuses from the Admin
-								Panel.
+								reach out to the administrator(wechat: xuming624).
 							</div>
 
 							<div class=" mt-6 mx-auto relative group w-fit">
