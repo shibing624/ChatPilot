@@ -142,6 +142,8 @@ MODEL_TOKEN_LIMIT = {
     "gpt-4-vision-preview": 128000,
 }
 
+MAX_DAILY_REQUESTS = int(os.environ.get("MAX_DAILY_REQUESTS", 100))
+
 # Search engine
 SERPER_API_KEY = os.environ.get("SERPER_API_KEY", None)
 SERPAPI_API_KEY = os.environ.get("SERPAPI_API_KEY", None)

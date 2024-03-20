@@ -53,3 +53,4 @@ class ERROR_MESSAGES(str, Enum):
 
     MODEL_NOT_FOUND = lambda name="": f"Model '{name}' was not found"
     OPENAI_NOT_FOUND = lambda name="": f"OpenAI API was not found"
+    DAILY_TOO_MANY_REQUEST = "Daily request limit reached"
