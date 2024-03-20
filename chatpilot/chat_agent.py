@@ -65,8 +65,8 @@ class ChatAgent:
         :param max_execution_time: The maximum execution time in seconds.
         :param temperature: The temperature for the OpenAI model.
         :param num_memory_turns: The number of memory turns to keep in the chat history, -1 for unlimited.
-        :param max_tokens: The maximum number of tokens for the OpenAI model.
-        :param max_context_tokens: The maximum number of context tokens to use.
+        :param max_tokens: The maximum number of tokens for the OpenAI model to generate.
+        :param max_context_tokens: The maximum number of context tokens to use, prompt max tokens.
         :param streaming: If True, enables streaming mode.
         :param openai_api_key: The API keys for the OpenAI API.
         :param openai_api_base: The base URLs for the OpenAI API.
@@ -86,17 +86,16 @@ class ChatAgent:
         self.serper_api_key = serper_api_key
         self.system_prompt = system_prompt if system_prompt else SYSTEM_PROMPT
         # Check max tokens
-        model_token_limit = MODEL_TOKEN_LIMIT.get(openai_model, 4096)
-        num_buffer_tokens = 25
-        generate_limit = model_token_limit - num_buffer_tokens
-        if max_tokens > generate_limit:
-            logger.warning(f"max_tokens should be less than or equal to {generate_limit}, but got {max_tokens}")
-            max_tokens = generate_limit
-        context_limit = model_token_limit - num_buffer_tokens
-        if max_context_tokens > context_limit:
-            logger.warning(
-                f"max_context_tokens should be less than or equal to {context_limit}, but got {max_context_tokens}")
-            max_context_tokens = context_limit
+        total_limit = MODEL_TOKEN_LIMIT.get(openai_model, 4096)
+        if max_tokens + max_context_tokens > total_limit:
+            logger.warning(f"The sum of max_tokens and max_context_tokens should be less than "
+                           f"{total_limit}, but got {max_tokens + max_context_tokens}")
+            # Adjust max_tokens and max_context_tokens proportionally to fit within the total_limit
+            total_requested = max_tokens + max_context_tokens
+            max_tokens = int((max_tokens / total_requested) * total_limit)
+            max_context_tokens = total_limit - max_tokens
+            logger.warning(f"Adjusted max_tokens to {max_tokens} and max_context_tokens to {max_context_tokens}")
+        self.max_tokens = max_tokens
         self.max_context_tokens = max_context_tokens
 
         # Define llm
@@ -243,7 +242,7 @@ class ChatAgent:
         length = len(encoding.encode(text))
         return length
 
-    def _trim_chat_history_to_max_tokens(self, chat_history: List):
+    def _trim_chat_history_to_max_context_tokens(self, chat_history: List):
         """
         Trims the chat history to ensure it does not exceed the max_context_tokens limit.
 
@@ -274,7 +273,7 @@ class ChatAgent:
                 chat_history[-self.num_memory_turns * 2:]
                 if self.num_memory_turns > 0 else chat_history
             )
-            chat_history = self._trim_chat_history_to_max_tokens(chat_history)
+            chat_history = self._trim_chat_history_to_max_context_tokens(chat_history)
         output = self.agent_executor.invoke(
             {"input": input_str, "chat_history": chat_history}
         )
@@ -299,7 +298,7 @@ class ChatAgent:
                 chat_history[-self.num_memory_turns * 2:]
                 if self.num_memory_turns > 0 else chat_history
             )
-            chat_history = self._trim_chat_history_to_max_tokens(chat_history)
+            chat_history = self._trim_chat_history_to_max_context_tokens(chat_history)
         events = self.agent_executor.astream_events(
             {"input": input_str, "chat_history": chat_history},
             version="v1"
