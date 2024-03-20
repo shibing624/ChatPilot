@@ -87,12 +87,15 @@ class ChatAgent:
         self.system_prompt = system_prompt if system_prompt else SYSTEM_PROMPT
         # Check max tokens
         total_limit = MODEL_TOKEN_LIMIT.get(openai_model, 4096)
+        # FIXME
+        # https://community.openai.com/t/why-is-gpt-3-5-turbo-1106-max-tokens-limited-to-4096/494973/3
+        max_tokens = min(max_tokens, 4096)
         if max_tokens + max_context_tokens > total_limit:
             logger.warning(f"The sum of max_tokens and max_context_tokens should be less than "
                            f"{total_limit}, but got {max_tokens + max_context_tokens}")
             # Adjust max_tokens and max_context_tokens proportionally to fit within the total_limit
             total_requested = max_tokens + max_context_tokens
-            max_tokens = int((max_tokens / total_requested) * total_limit)
+            max_tokens = min(int((max_tokens / total_requested) * total_limit), 4096)
             max_context_tokens = total_limit - max_tokens
             logger.warning(f"Adjusted max_tokens to {max_tokens} and max_context_tokens to {max_context_tokens}")
         self.max_tokens = max_tokens
