@@ -130,6 +130,18 @@ OPENAI_API_BASE_URLS = [i.strip() for i in OPENAI_API_BASE_URLS.split(",")]
 OPENAI_API_BASE = OPENAI_API_BASE_URLS[0]
 assert len(OPENAI_API_KEYS) == len(OPENAI_API_BASE_URLS), "Number of OpenAI API keys and base URLs should be the same"
 
+MODEL_TOKEN_LIMIT = {
+    "gpt-3.5-turbo": 4096,
+    "gpt-3.5-turbo-instruct": 4096,
+    "gpt-3.5-turbo-16k": 16384,
+    "gpt-3.5-turbo-1106": 16384,
+    "gpt-4": 8192,
+    "gpt-4-32k": 32768,
+    "gpt-4-1106-preview": 128000,
+    "gpt-4-turbo-preview": 128000,
+    "gpt-4-vision-preview": 128000,
+}
+
 # Search engine
 SERPER_API_KEY = os.environ.get("SERPER_API_KEY", None)
 SERPAPI_API_KEY = os.environ.get("SERPAPI_API_KEY", None)

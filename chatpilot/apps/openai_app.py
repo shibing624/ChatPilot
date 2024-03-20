@@ -361,8 +361,8 @@ async def proxy(path: str, request: Request, user=Depends(get_current_user)):
             streaming=True,
             max_iterations=2,
             max_execution_time=60,
-            openai_api_base=base_url,
             openai_api_key=api_key,
+            openai_api_base=base_url,
             serper_api_key=SERPER_API_KEY,
             system_prompt=system_prompt,
         )

@@ -4,8 +4,7 @@
 @description: 
 """
 
-from datetime import datetime
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import tiktoken
 from langchain.agents import AgentExecutor
@@ -33,6 +32,7 @@ from chatpilot.config import (
     ENABLE_CRAWLER_TOOL,
     ENABLE_RUN_PYTHON_CODE_TOOL,
     ENABLE_SEARCH_TOOL,
+    MODEL_TOKEN_LIMIT,
 )
 
 
@@ -46,11 +46,11 @@ class ChatAgent:
             max_execution_time: int = 120,
             temperature: float = 0.7,
             num_memory_turns: int = -1,
-            max_tokens: Optional[int] = None,
-            max_context_tokens: int = 8192,
+            max_tokens: Optional[int] = 1024,
+            max_context_tokens: int = 256,
             streaming: bool = False,
-            openai_api_base: str = OPENAI_API_BASE,
             openai_api_key: str = OPENAI_API_KEY,
+            openai_api_base: str = OPENAI_API_BASE,
             serper_api_key: str = SERPER_API_KEY,
             system_prompt: str = SYSTEM_PROMPT,
             **kwargs
@@ -66,10 +66,11 @@ class ChatAgent:
         :param temperature: The temperature for the OpenAI model.
         :param num_memory_turns: The number of memory turns to keep in the chat history, -1 for unlimited.
         :param max_tokens: The maximum number of tokens for the OpenAI model.
-        :param streaming: If True, enables streaming mode.
         :param max_context_tokens: The maximum number of context tokens to use.
-        :param openai_api_base: The base URLs for the OpenAI API.
+        :param streaming: If True, enables streaming mode.
         :param openai_api_key: The API keys for the OpenAI API.
+        :param openai_api_base: The base URLs for the OpenAI API.
+        :param serper_api_key: The API key for the Serper API.
         :param kwargs: Additional keyword arguments.
         """
         if not openai_api_key:
@@ -78,7 +79,6 @@ class ChatAgent:
         if search_engine_name == "serper" and not serper_api_key:
             raise ValueError("Missing `SERPER_API_KEY` environment variable.")
 
-        self.max_context_tokens = max_context_tokens
         self.max_iterations = max_iterations
         self.max_execution_time = max_execution_time
         self.verbose = verbose
@@ -87,11 +87,15 @@ class ChatAgent:
         self.system_prompt = system_prompt if system_prompt else SYSTEM_PROMPT
 
         # Define llm
+        model_token_limit = MODEL_TOKEN_LIMIT.get(openai_model, 4096)
+        if max_tokens > model_token_limit:
+            logger.warning(f"max_tokens should be less than or equal to {model_token_limit}, but got {max_tokens}")
+            max_tokens = model_token_limit
         self.llm = ChatOpenAI(
             model=openai_model,
             temperature=temperature,
-            openai_api_base=openai_api_base,
             openai_api_key=openai_api_key,
+            openai_api_base=openai_api_base,
             max_tokens=max_tokens,
             timeout=max_execution_time,
             streaming=streaming,
@@ -104,6 +108,13 @@ class ChatAgent:
         self.streaming = streaming
         self.openai_api_key = openai_api_key
         self.openai_api_base = openai_api_base
+
+        context_limit = model_token_limit / 2
+        if max_context_tokens > context_limit:
+            logger.warning(
+                f"max_context_tokens should be less than or equal to {context_limit}, but got {max_context_tokens}")
+            max_context_tokens = context_limit
+        self.max_context_tokens = max_context_tokens
 
         # Define the search engine
         self.search_engine = self._initialize_search_engine()
