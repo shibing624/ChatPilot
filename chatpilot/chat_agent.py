@@ -46,8 +46,8 @@ class ChatAgent:
             max_execution_time: int = 120,
             temperature: float = 0.7,
             num_memory_turns: int = -1,
-            max_tokens: Optional[int] = 1024,
-            max_context_tokens: int = 256,
+            max_tokens: int = 256,
+            max_context_tokens: int = 1024,
             streaming: bool = False,
             openai_api_key: str = OPENAI_API_KEY,
             openai_api_base: str = OPENAI_API_BASE,
@@ -85,12 +85,21 @@ class ChatAgent:
         self.search_engine_name = search_engine_name
         self.serper_api_key = serper_api_key
         self.system_prompt = system_prompt if system_prompt else SYSTEM_PROMPT
+        # Check max tokens
+        model_token_limit = MODEL_TOKEN_LIMIT.get(openai_model, 4096)
+        num_buffer_tokens = 25
+        generate_limit = model_token_limit - num_buffer_tokens
+        if max_tokens > generate_limit:
+            logger.warning(f"max_tokens should be less than or equal to {generate_limit}, but got {max_tokens}")
+            max_tokens = generate_limit
+        context_limit = model_token_limit - num_buffer_tokens
+        if max_context_tokens > context_limit:
+            logger.warning(
+                f"max_context_tokens should be less than or equal to {context_limit}, but got {max_context_tokens}")
+            max_context_tokens = context_limit
+        self.max_context_tokens = max_context_tokens
 
         # Define llm
-        model_token_limit = MODEL_TOKEN_LIMIT.get(openai_model, 4096)
-        if max_tokens > model_token_limit:
-            logger.warning(f"max_tokens should be less than or equal to {model_token_limit}, but got {max_tokens}")
-            max_tokens = model_token_limit
         self.llm = ChatOpenAI(
             model=openai_model,
             temperature=temperature,
@@ -108,13 +117,6 @@ class ChatAgent:
         self.streaming = streaming
         self.openai_api_key = openai_api_key
         self.openai_api_base = openai_api_base
-
-        context_limit = model_token_limit / 2
-        if max_context_tokens > context_limit:
-            logger.warning(
-                f"max_context_tokens should be less than or equal to {context_limit}, but got {max_context_tokens}")
-            max_context_tokens = context_limit
-        self.max_context_tokens = max_context_tokens
 
         # Define the search engine
         self.search_engine = self._initialize_search_engine()
