@@ -58,6 +58,7 @@ from chatpilot.config import (
     CHUNK_SIZE,
     CHUNK_OVERLAP,
     RAG_TEMPLATE,
+    RAG_TOP_K,
     OPENAI_API_KEYS,
     OPENAI_API_BASE_URLS,
 )
@@ -70,7 +71,7 @@ app.state.CHUNK_SIZE = CHUNK_SIZE
 app.state.CHUNK_OVERLAP = CHUNK_OVERLAP
 app.state.RAG_TEMPLATE = RAG_TEMPLATE
 app.state.RAG_EMBEDDING_MODEL = RAG_EMBEDDING_MODEL
-app.state.TOP_K = 5
+app.state.TOP_K = RAG_TOP_K
 app.state.OPENAI_API_KEYS = OPENAI_API_KEYS
 app.state.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
 

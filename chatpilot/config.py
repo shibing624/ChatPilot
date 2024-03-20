@@ -142,7 +142,7 @@ MODEL_TOKEN_LIMIT = {
     "gpt-4-vision-preview": 128000,
 }
 
-MAX_DAILY_REQUESTS = int(os.environ.get("MAX_DAILY_REQUESTS", 100))
+MAX_DAILY_REQUESTS = int(os.environ.get("MAX_DAILY_REQUESTS", -1))
 
 # Search engine
 SERPER_API_KEY = os.environ.get("SERPER_API_KEY", None)
@@ -170,8 +170,9 @@ except Exception as e:
     CHROMA_CLIENT = None
     logger.warning(f"ChromaDB client failed to initialize: {e}, ignore it if you don't use RAG.")
 
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 100
+CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 1000))
+CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", 100))
+RAG_TOP_K = int(os.environ.get("RAG_TOP_K", 5))
 
 RAG_TEMPLATE = """根据上下文(context)回答问题：
 <context>
