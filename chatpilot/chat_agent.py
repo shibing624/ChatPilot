@@ -17,7 +17,7 @@ from langchain_community.utilities import GoogleSerperAPIWrapper, DuckDuckGoSear
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import Tool
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from loguru import logger
 
 from chatpilot.config import (
@@ -33,6 +33,7 @@ from chatpilot.config import (
     ENABLE_RUN_PYTHON_CODE_TOOL,
     ENABLE_SEARCH_TOOL,
     MODEL_TOKEN_LIMIT,
+    OPENAI_API_VERSION,
 )
 
 
@@ -53,6 +54,7 @@ class ChatAgent:
             openai_api_base: str = OPENAI_API_BASE,
             serper_api_key: str = SERPER_API_KEY,
             system_prompt: str = SYSTEM_PROMPT,
+            openai_api_version: Optional[str] = OPENAI_API_VERSION,
             **kwargs
     ):
         """
@@ -71,6 +73,8 @@ class ChatAgent:
         :param openai_api_key: The API keys for the OpenAI API.
         :param openai_api_base: The base URLs for the OpenAI API.
         :param serper_api_key: The API key for the Serper API.
+        :param system_prompt: The system prompt to use for the ChatAgent.
+        :param openai_api_version: if set, use AZURE api, otherwise use openai api.
         :param kwargs: Additional keyword arguments.
         """
         if not openai_api_key:
@@ -100,18 +104,30 @@ class ChatAgent:
             logger.warning(f"Adjusted max_tokens to {max_tokens} and max_context_tokens to {max_context_tokens}")
         self.max_tokens = max_tokens
         self.max_context_tokens = max_context_tokens
-
         # Define llm
-        self.llm = ChatOpenAI(
-            model=openai_model,
-            temperature=temperature,
-            openai_api_key=openai_api_key,
-            openai_api_base=openai_api_base,
-            max_tokens=max_tokens,
-            timeout=max_execution_time,
-            streaming=streaming,
-            **kwargs
-        )
+        if openai_api_version:
+            self.llm = AzureChatOpenAI(
+                openai_api_version=openai_api_version,
+                deployment_name=openai_model,
+                azure_endpoint=openai_api_base,
+                openai_api_key=openai_api_key,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                timeout=max_execution_time,
+                streaming=streaming,
+                **kwargs
+            )
+        else:
+            self.llm = ChatOpenAI(
+                model=openai_model,
+                temperature=temperature,
+                openai_api_key=openai_api_key,
+                openai_api_base=openai_api_base,
+                max_tokens=max_tokens,
+                timeout=max_execution_time,
+                streaming=streaming,
+                **kwargs
+            )
         self.openai_model = openai_model
         self.temperature = temperature
         self.max_tokens = max_tokens

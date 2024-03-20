@@ -130,6 +130,12 @@ OPENAI_API_BASE_URLS = [i.strip() for i in OPENAI_API_BASE_URLS.split(",")]
 OPENAI_API_BASE = OPENAI_API_BASE_URLS[0]
 assert len(OPENAI_API_KEYS) == len(OPENAI_API_BASE_URLS), "Number of OpenAI API keys and base URLs should be the same"
 
+# AZURE openai api
+OPENAI_API_VERSION = os.environ.get("OPENAI_API_VERSION", None)
+# if OPENAI_API_VERSION not None, it will use azure openai api, please set azure_endpoint to OPENAI_API_BASE,
+# set api_key to OPENAI_API_KEY
+
+
 MODEL_TOKEN_LIMIT = {
     "gpt-3.5-turbo": 4096,
     "gpt-3.5-turbo-instruct": 4096,
