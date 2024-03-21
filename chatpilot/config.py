@@ -115,7 +115,7 @@ OLLAMA_BASE_URLS = [url.strip() for url in OLLAMA_BASE_URL.split(";")]
 ####################################
 # OPENAI_API
 ####################################
-MODEL_TYPE = os.environ.get("MODEL_TYPE", "openai")
+MODEL_TYPE = os.environ.get("MODEL_TYPE", "openai")  # it can be openai / azure
 
 # api key can be multiple, separated by comma(,)
 OPENAI_API_KEYS = os.environ.get("OPENAI_API_KEYS", os.environ.get("OPENAI_API_KEY", ""))
