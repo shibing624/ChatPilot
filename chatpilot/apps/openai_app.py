@@ -34,6 +34,7 @@ from chatpilot.config import (
     SERPER_API_KEY,
     OpenAIClientWrapper,
     MAX_DAILY_REQUESTS,
+    MODEL_TYPE
 )
 from chatpilot.constants import ERROR_MESSAGES
 
@@ -70,8 +71,6 @@ today = datetime.now().date()
 async def check_url(request: Request, call_next):
     if len(app.state.MODELS) == 0:
         await get_all_models()
-    else:
-        pass
 
     response = await call_next(request)
     return response
@@ -188,31 +187,33 @@ def merge_models_lists(model_lists):
                 for model in models if model["id"]
             ]
         )
-
     return merged_list
 
 
 async def get_all_models():
-    if len(app.state.OPENAI_API_KEYS) == 1 and app.state.OPENAI_API_KEYS[0] == "":
-        models = {"data": []}
+    logger.debug(f"model_type: {MODEL_TYPE}, base urls size: {len(app.state.OPENAI_API_BASE_URLS)}, "
+                 f"keys size: {len(app.state.OPENAI_API_KEYS)}")
+    if MODEL_TYPE == 'azure':
+        models = {"data": [{"id": "gpt-35-turbo", "name": "Gpt-35-Turbo", "urlIdx": 0}]}
     else:
-        logger.debug(f"base urls size: {len(app.state.OPENAI_API_BASE_URLS)}, "
-                     f"keys size: {len(app.state.OPENAI_API_KEYS)}")
-        tasks = [
-            fetch_url(f"{url}/models", app.state.OPENAI_API_KEYS[idx])
-            for idx, url in enumerate(list(set(app.state.OPENAI_API_BASE_URLS)))
-        ]
-        responses = await asyncio.gather(*tasks)
-        responses = list(
-            filter(lambda x: x is not None and "error" not in x, responses)
-        )
-        models = {
-            "data": merge_models_lists(
-                list(map(lambda response: response["data"], responses))
+        if len(app.state.OPENAI_API_KEYS) == 1 and app.state.OPENAI_API_KEYS[0] == "":
+            models = {"data": []}
+        else:
+            tasks = [
+                fetch_url(f"{url}/models", app.state.OPENAI_API_KEYS[idx])
+                for idx, url in enumerate(list(set(app.state.OPENAI_API_BASE_URLS)))
+            ]
+            responses = await asyncio.gather(*tasks)
+            responses = list(
+                filter(lambda x: x is not None and "error" not in x, responses)
             )
-        }
-        app.state.MODELS = {model["id"]: model for model in models["data"]}
-        logger.debug(f"get_all_models done, size: {len(app.state.MODELS)}")
+            models = {
+                "data": merge_models_lists(
+                    list(map(lambda response: response["data"], responses))
+                )
+            }
+    app.state.MODELS = {model["id"]: model for model in models["data"]}
+    logger.debug(f"get_all_models done, size: {len(app.state.MODELS)}, {app.state.MODELS}")
     return models
 
 
@@ -234,6 +235,7 @@ async def get_models(url_idx: Optional[int] = None, user=Depends(get_current_use
         return models
     else:
         try:
+            logger.debug(f"get_models url_idx: {url_idx}")
             url = app.state.OPENAI_API_BASE_URLS[url_idx]
             r = requests.request(method="GET", url=f"{url}/models")
             r.raise_for_status()
@@ -315,8 +317,8 @@ def proxy_other_request(api_key, base_url, path, body, method):
         response_data = r.json()
         return response_data
 
-
-@app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+import pdb
+@app.api_route("/{path:path}", methods=["POST"])
 async def proxy(path: str, request: Request, user=Depends(get_current_user)):
     method = request.method
     logger.debug(f"Proxying request to OpenAI: {path}, method: {method}, "
@@ -334,11 +336,13 @@ async def proxy(path: str, request: Request, user=Depends(get_current_user)):
         else:
             user_request_counts[user_id] = (today, 1)
 
-    body = await request.body()
-    body_dict = json.loads(body.decode("utf-8"))
-
     if not app.state.OPENAI_API_KEYS[0]:
         raise HTTPException(status_code=401, detail=ERROR_MESSAGES.API_KEY_NOT_FOUND)
+
+    logger.debug("Before request.body()")
+    body = await request.body()
+    logger.debug("After request.body()")
+    body_dict = json.loads(body.decode("utf-8"))
 
     try:
         # Get the next key and base URL from the client manager
@@ -346,11 +350,13 @@ async def proxy(path: str, request: Request, user=Depends(get_current_user)):
         show_api_key = api_key[:4] + "..." + api_key[-4:]
         logger.debug(f"Using API key: {show_api_key}, base URL: {base_url}")
 
-        openai_model = body_dict.get('model', 'gpt-3.5-turbo')
+        model_name = body_dict.get('model', 'gpt-3.5-turbo')
         max_tokens = body_dict.get("max_tokens", 1024)
         temperature = body_dict.get("temperature", 0.7)
         num_ctx = body_dict.get('num_ctx', 1024)
         messages = body_dict.get("messages", [])
+        logger.debug(f"model_name: {model_name}, max_tokens: {max_tokens}, "
+                     f"num_ctx: {num_ctx}, messages size: {len(messages)}")
         system_prompt = ""
         history = []
         for message in messages:
@@ -370,8 +376,11 @@ async def proxy(path: str, request: Request, user=Depends(get_current_user)):
 
         # Create a new ChatAgent instance for each request
         chat_agent = ChatAgent(
-            openai_model=openai_model,
-            search_engine_name="serper" if SERPER_API_KEY else "duckduckgo",
+            model_type=MODEL_TYPE,
+            model_name=model_name,
+            model_api_key=api_key,
+            model_api_base=base_url,
+            search_name="serper" if SERPER_API_KEY else "duckduckgo",
             verbose=True,
             temperature=temperature,
             max_tokens=max_tokens,
@@ -379,9 +388,6 @@ async def proxy(path: str, request: Request, user=Depends(get_current_user)):
             streaming=True,
             max_iterations=2,
             max_execution_time=60,
-            openai_api_key=api_key,
-            openai_api_base=base_url,
-            serper_api_key=SERPER_API_KEY,
             system_prompt=system_prompt,
         )
         events = await chat_agent.astream_run(user_question, chat_history=history)
@@ -401,7 +407,7 @@ async def proxy(path: str, request: Request, user=Depends(get_current_user)):
                         "id": event.get('id', 'default_id'),
                         "object": "chat.completion.chunk",
                         "created": event.get('created', created),
-                        "model": openai_model,
+                        "model": model_name,
                         "system_fingerprint": event.get('system_fingerprint', ''),
                         "choices": [
                             {

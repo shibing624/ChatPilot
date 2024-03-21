@@ -20,7 +20,7 @@ DOTENV_PATH = os.getenv("DOTENV_PATH", os.path.join(pwd_path, "../.env"))
 try:
     from dotenv import load_dotenv  # noqa
 
-    if load_dotenv(DOTENV_PATH):
+    if load_dotenv(DOTENV_PATH, override=True, verbose=True):
         logger.info(f"Loaded environment variables from {DOTENV_PATH}")
 except ImportError:
     logger.debug("dotenv not installed, skipping...")
@@ -115,6 +115,7 @@ OLLAMA_BASE_URLS = [url.strip() for url in OLLAMA_BASE_URL.split(";")]
 ####################################
 # OPENAI_API
 ####################################
+MODEL_TYPE = os.environ.get("MODEL_TYPE", "openai")
 
 # api key can be multiple, separated by comma(,)
 OPENAI_API_KEYS = os.environ.get("OPENAI_API_KEYS", os.environ.get("OPENAI_API_KEY", ""))
@@ -147,6 +148,9 @@ MODEL_TOKEN_LIMIT = {
     "gpt-4-turbo-preview": 128000,
     "gpt-4-vision-preview": 128000,
 }
+
+# Dashscope Tongyi Qwen model
+DASHSCOPE_API_KEY = os.environ.get("DASHSCOPE_API_KEY", "")
 
 MAX_DAILY_REQUESTS = int(os.environ.get("MAX_DAILY_REQUESTS", -1))
 

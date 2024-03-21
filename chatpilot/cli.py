@@ -6,7 +6,7 @@
 import argparse
 
 from .chat_agent import ChatAgent
-from .config import OPENAI_API_KEY, OPENAI_API_BASE, SERPER_API_KEY
+from .config import OPENAI_API_KEY, OPENAI_API_BASE
 
 
 def main():
@@ -15,15 +15,14 @@ def main():
     parser.add_argument('--search', type=str, default='duckduckgo', help='search engine name, e.g. duckduckgo, serper')
     parser.add_argument('--openai_api_key', type=str, default=OPENAI_API_KEY, help='openai api key')
     parser.add_argument('--openai_api_base', type=str, default=OPENAI_API_BASE, help='openai api base url')
-    parser.add_argument('--serper_api_key', type=str, default=SERPER_API_KEY, help='serper api key')
     args = parser.parse_args()
 
     m = ChatAgent(
-        openai_model=args.model,
+        model_api_key=args.openai_api_key,
+        model_api_base=args.openai_api_base,
+        model_type='openai',
+        model_name=args.model,
         search_engine_name=args.search,
-        openai_api_base=args.openai_api_base,
-        openai_api_key=args.openai_api_key,
-        serper_api_key=args.serper_api_key
     )
 
     def get_llm_response(query):

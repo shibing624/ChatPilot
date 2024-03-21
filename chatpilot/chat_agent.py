@@ -3,45 +3,47 @@
 @author:XuMing(xuming624@qq.com)
 @description: 
 """
-
+import os
 from typing import List, Optional
-
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 import tiktoken
 from langchain.agents import AgentExecutor
+from langchain.agents import create_react_agent
 from langchain.agents.format_scratchpad.openai_tools import format_to_openai_tool_messages
 from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
 from langchain.tools import StructuredTool
+from langchain_community.chat_models import ChatTongyi
 from langchain_community.document_loaders import WebBaseLoader, OnlinePDFLoader
 from langchain_community.tools import E2BDataAnalysisTool
 from langchain_community.utilities import GoogleSerperAPIWrapper, DuckDuckGoSearchAPIWrapper
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import Tool
-from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from loguru import logger
 
 from chatpilot.config import (
-    SERPER_API_KEY,
-    OPENAI_API_BASE,
-    OPENAI_API_KEY,
-    E2B_API_KEY,
     RUN_PYTHON_CODE_TOOL_DESC,
     SYSTEM_PROMPT,
     SEARCH_TOOL_DESC,
     CRAWLER_TOOL_DESC,
+    MODEL_TOKEN_LIMIT,
+    ENABLE_SEARCH_TOOL,
     ENABLE_CRAWLER_TOOL,
     ENABLE_RUN_PYTHON_CODE_TOOL,
-    ENABLE_SEARCH_TOOL,
-    MODEL_TOKEN_LIMIT,
-    OPENAI_API_VERSION,
 )
 
 
 class ChatAgent:
     def __init__(
             self,
-            openai_model: str = "gpt-3.5-turbo-1106",
-            search_engine_name: str = "serper",
+            model_type: str = "openai",
+            model_name: str = "gpt-3.5-turbo-1106",
+            model_api_key: str = os.getenv("OPENAI_API_KEY"),
+            model_api_base: str = os.getenv("OPENAI_API_BASE"),
+            search_name: Optional[str] = "serper",
+            enable_search_tool: bool = ENABLE_SEARCH_TOOL,
+            enable_crawler_tool: bool = ENABLE_CRAWLER_TOOL,
+            enable_run_python_code_tool: bool = ENABLE_RUN_PYTHON_CODE_TOOL,
             verbose: bool = True,
             max_iterations: int = 3,
             max_execution_time: int = 120,
@@ -50,18 +52,20 @@ class ChatAgent:
             max_tokens: int = 256,
             max_context_tokens: int = 1024,
             streaming: bool = False,
-            openai_api_key: str = OPENAI_API_KEY,
-            openai_api_base: str = OPENAI_API_BASE,
-            serper_api_key: str = SERPER_API_KEY,
             system_prompt: str = SYSTEM_PROMPT,
-            openai_api_version: Optional[str] = OPENAI_API_VERSION,
             **kwargs
     ):
         """
         Initializes the ChatAgent with the given parameters.
 
-        :param openai_model: The model name of OpenAI.
-        :param search_engine_name: The name of the search engine to use, such as "serper" or "duckduckgo".
+        :param model_type: The type of the model, such as "openai" or "azure".
+        :param model_name: The model name of OpenAI.
+        :param model_api_key: The API keys for the OpenAI API.
+        :param model_api_base: The base URLs for the OpenAI API.
+        :param search_name: The name of the search engine to use, such as "serper" or "duckduckgo".
+        :param enable_search_tool: If True, enables the search tool.
+        :param enable_crawler_tool: If True, enables the web URL crawler tool.
+        :param enable_run_python_code_tool: If True, enables the run Python code tool.
         :param verbose: If True, enables verbose logging.
         :param max_iterations: The maximum number of iterations for the agent executor.
         :param max_execution_time: The maximum execution time in seconds.
@@ -70,27 +74,11 @@ class ChatAgent:
         :param max_tokens: The maximum number of tokens for the OpenAI model to generate.
         :param max_context_tokens: The maximum number of context tokens to use, prompt max tokens.
         :param streaming: If True, enables streaming mode.
-        :param openai_api_key: The API keys for the OpenAI API.
-        :param openai_api_base: The base URLs for the OpenAI API.
-        :param serper_api_key: The API key for the Serper API.
         :param system_prompt: The system prompt to use for the ChatAgent.
-        :param openai_api_version: if set, use AZURE api, otherwise use openai api.
         :param kwargs: Additional keyword arguments.
         """
-        if not openai_api_key:
-            raise Exception("`OPENAI_API_KEY` or `OPENAI_API_KEYS` environment variable must set.")
-
-        if search_engine_name == "serper" and not serper_api_key:
-            raise ValueError("Missing `SERPER_API_KEY` environment variable.")
-
-        self.max_iterations = max_iterations
-        self.max_execution_time = max_execution_time
-        self.verbose = verbose
-        self.search_engine_name = search_engine_name
-        self.serper_api_key = serper_api_key
-        self.system_prompt = system_prompt if system_prompt else SYSTEM_PROMPT
         # Check max tokens
-        total_limit = MODEL_TOKEN_LIMIT.get(openai_model, 4096)
+        total_limit = MODEL_TOKEN_LIMIT.get(model_name, 4096)
         # FIXME
         # https://community.openai.com/t/why-is-gpt-3-5-turbo-1106-max-tokens-limited-to-4096/494973/3
         max_tokens = min(max_tokens, 4096)
@@ -105,12 +93,32 @@ class ChatAgent:
         self.max_tokens = max_tokens
         self.max_context_tokens = max_context_tokens
         # Define llm
-        if openai_api_version:
+        if model_type == 'azure':
             self.llm = AzureChatOpenAI(
-                openai_api_version=openai_api_version,
-                deployment_name=openai_model,
-                azure_endpoint=openai_api_base,
-                openai_api_key=openai_api_key,
+                openai_api_version=os.environ.get("OPENAI_API_VERSION"),
+                openai_api_base=model_api_base,
+                openai_api_key=model_api_key,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                timeout=max_execution_time,
+                streaming=streaming,
+                **kwargs
+            )
+        elif model_type == 'openai':
+            self.llm = ChatOpenAI(
+                model=model_name,
+                temperature=temperature,
+                openai_api_key=model_api_key,
+                openai_api_base=model_api_base,
+                max_tokens=max_tokens,
+                timeout=max_execution_time,
+                streaming=streaming,
+                **kwargs
+            )
+        elif model_type == 'dashscope':
+            self.llm = ChatTongyi(
+                model_name=model_name,
+                dashscope_api_key=model_api_key,
                 temperature=temperature,
                 max_tokens=max_tokens,
                 timeout=max_execution_time,
@@ -118,51 +126,52 @@ class ChatAgent:
                 **kwargs
             )
         else:
-            self.llm = ChatOpenAI(
-                model=openai_model,
-                temperature=temperature,
-                openai_api_key=openai_api_key,
-                openai_api_base=openai_api_base,
-                max_tokens=max_tokens,
-                timeout=max_execution_time,
-                streaming=streaming,
-                **kwargs
-            )
-        self.openai_model = openai_model
+            raise ValueError(f"Unsupported model type: {model_type}")
+        self.model_type = model_type
+        self.model_name = model_name
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.max_execution_time = max_execution_time
         self.streaming = streaming
-        self.openai_api_key = openai_api_key
-        self.openai_api_base = openai_api_base
 
-        # Define the search engine
-        self.search_engine = self._initialize_search_engine()
+        self.max_iterations = max_iterations
+        self.verbose = verbose
+        self.search_name = search_name
+        self.system_prompt = system_prompt if system_prompt else SYSTEM_PROMPT
 
         # Define tools
+        self.enable_search_tool = enable_search_tool
+        self.enable_crawler_tool = enable_crawler_tool
+        self.enable_run_python_code_tool = enable_run_python_code_tool
         self.tools = self._initialize_tools()
 
         # Define agent
         self.chat_history = []
         self.num_memory_turns = num_memory_turns
-        self.agent_executor = self._initialize_agent_executor()
-        logger.debug(f"ChatAgent initialized with model: {openai_model}")
+        if self.tools:
+            self.agent_executor = self._initialize_agent_executor()
+        else:
+            self.agent_executor = self._initialize_chat_chain()
+        logger.debug(f"ChatAgent initialized with model: {model_name}")
 
     def _initialize_search_engine(self):
         """
         Initializes the search engine based on the provided name.
 
-        :param search_engine_name: The name of the search engine.
+        :param search_name: The name of the search engine.
         :return: An instance of the search engine.
         """
-        if self.search_engine_name == "serper":
+        if self.search_name == "serper":
+            serper_api_key = os.getenv("SERPER_API_KEY")
+            if not serper_api_key:
+                raise ValueError("Missing `SERPER_API_KEY` environment variable.")
             search_engine = GoogleSerperAPIWrapper()
             search_engine.gl = 'cn'
             search_engine.hl = 'zh-cn'
-            search_engine.serper_api_key = self.serper_api_key
+            search_engine.serper_api_key = serper_api_key
         else:
             search_engine = DuckDuckGoSearchAPIWrapper()
-        logger.debug(f"Initialized search engine: {self.search_engine_name}")
+        logger.debug(f"Initialized search engine: {self.search_name}")
         return search_engine
 
     def _initialize_tools(self):
@@ -171,6 +180,7 @@ class ChatAgent:
 
         :return: A list of Tool instances.
         """
+        E2B_API_KEY = os.environ.get("E2B_API_KEY", None)
         if E2B_API_KEY:
             run_python_code_tool = E2BDataAnalysisTool(api_key=E2B_API_KEY)
         else:
@@ -205,14 +215,14 @@ class ChatAgent:
         )
 
         tools = []
-        if ENABLE_SEARCH_TOOL:
+        if self.enable_search_tool:
+            # Define the search engine
+            self.search_engine = self._initialize_search_engine()
             tools.append(Tool(name="Search", func=self.search_engine.run, description=SEARCH_TOOL_DESC))
-        if ENABLE_RUN_PYTHON_CODE_TOOL:
+        if self.enable_run_python_code_tool:
             tools.append(run_python_code_tool)
-        if ENABLE_CRAWLER_TOOL:
+        if self.enable_crawler_tool:
             tools.append(web_url_crawler_tool)
-        if not tools:
-            raise ValueError("No tools are enabled, must enable at least one tool.")
         return tools
 
     def _initialize_agent_executor(self):
@@ -225,22 +235,27 @@ class ChatAgent:
         prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", self.system_prompt),
-                MessagesPlaceholder(variable_name="chat_history"),
+                MessagesPlaceholder(variable_name="chat_history", optional=True),
                 ("user", "{input}"),
                 MessagesPlaceholder(variable_name="agent_scratchpad"),
             ]
         )
         # logger.debug(f"Initialized ChatAgent prompt: {prompt}")
-        agent = (
-                {
-                    "input": lambda x: x["input"],
-                    "agent_scratchpad": lambda x: format_to_openai_tool_messages(x["intermediate_steps"]),
-                    "chat_history": lambda x: x["chat_history"] if "chat_history" in x and x["chat_history"] else [],
-                }
-                | prompt
-                | self.llm.bind_tools(self.tools)
-                | OpenAIToolsAgentOutputParser()
-        )
+        if self.model_type in ['openai', 'azure']:
+            llm_with_tools = self.llm.bind_tools(self.tools)
+            agent = (
+                    {
+                        "input": lambda x: x["input"],
+                        "agent_scratchpad": lambda x: format_to_openai_tool_messages(x["intermediate_steps"]),
+                        "chat_history": lambda x: x["chat_history"] if "chat_history" in x and x[
+                            "chat_history"] else [],
+                    }
+                    | prompt
+                    | llm_with_tools
+                    | OpenAIToolsAgentOutputParser()
+            )
+        else:
+            agent = create_react_agent(self.llm, self.tools, prompt)
         return AgentExecutor(
             agent=agent,
             tools=self.tools,
@@ -251,10 +266,22 @@ class ChatAgent:
             handle_parsing_errors=True,
         ).with_config({"run_name": "ChatAgent"})
 
+    def _initialize_chat_chain(self):
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", self.system_prompt),
+                MessagesPlaceholder(variable_name="chat_history"),
+                ("user", "{input}"),
+            ]
+        )
+        # parser = StrOutputParser()
+        chain = prompt | self.llm | OpenAIToolsAgentOutputParser()
+        return chain.with_config({"run_name": "ChatAgent"})
+
     def count_token_length(self, text):
         """Count token length."""
         try:
-            encoding = tiktoken.encoding_for_model(self.openai_model)
+            encoding = tiktoken.encoding_for_model(self.model_name)
         except KeyError:
             model = "cl100k_base"
             encoding = tiktoken.get_encoding(model)
@@ -278,7 +305,7 @@ class ChatAgent:
             total_tokens += message_tokens
         return trimmed_history
 
-    def run(self, input_str: str, chat_history: Optional[List] = None) -> dict:
+    def run(self, input_str: str, chat_history: Optional[List] = None):
         """
         Runs the given input string through the ChatAgent and returns the result.
 
@@ -296,8 +323,12 @@ class ChatAgent:
         output = self.agent_executor.invoke(
             {"input": input_str, "chat_history": chat_history}
         )
+        if hasattr(output, "log"):
+            output_str = output.log
+        else:
+            output_str = output.get('output', '')
         chat_history.extend(
-            [HumanMessage(content=input_str), AIMessage(content=output["output"])]
+            [HumanMessage(content=input_str), AIMessage(content=output_str)]
         )
         self.chat_history = chat_history
         return output
