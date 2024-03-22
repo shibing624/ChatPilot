@@ -75,7 +75,7 @@ app.state.TOP_K = RAG_TOP_K
 app.state.OPENAI_API_KEYS = OPENAI_API_KEYS
 app.state.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
 
-if app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
+if app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0] and "text-embedding" in app.state.RAG_EMBEDDING_MODEL:
     app.state.sentence_transformer_ef = embedding_functions.OpenAIEmbeddingFunction(
         api_key=app.state.OPENAI_API_KEYS[0],
         api_base=app.state.OPENAI_API_BASE_URLS[0],
