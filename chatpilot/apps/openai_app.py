@@ -64,7 +64,6 @@ app.state.MODELS = {}
 
 # User request counter, format is {user_id: (date, count)}
 user_request_counts = {}
-today = datetime.now().date()
 
 
 @app.middleware("http")
@@ -325,6 +324,7 @@ async def proxy(path: str, request: Request, user=Depends(get_current_user)):
                  f"user: {user.id} {user.name} {user.email} {user.role}")
     if MAX_DAILY_REQUESTS > 0:
         user_id = user.id
+        today = datetime.now().date()
         if user_id in user_request_counts:
             last_date, count = user_request_counts[user_id]
             if last_date == today and count >= MAX_DAILY_REQUESTS:
