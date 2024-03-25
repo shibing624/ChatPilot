@@ -181,11 +181,11 @@ def query_collection(
 
 
 def get_rag_prompt(template: str, context: str, query: str):
-    template = re.sub(r"\[context\]", context, template)
-    template = re.sub(r"\[query\]", query, template)
+    # Replace placeholders in the template with the context and query
+    template = template.replace("[context]", context, 1)
+    template = template.replace("[query]", query, 1)
 
     return template
-
 
 def rag_messages(docs, messages, template, k, embedding_function):
     logger.debug(f"docs: {docs}")

@@ -3,15 +3,20 @@
 @author:XuMing(xuming624@qq.com)
 @description: 
 """
+import hashlib
 import json
 import mimetypes
 import os
 import shutil
 import uuid
 from pathlib import Path
-from typing import List
-from typing import Optional
+from typing import List, Optional, cast
 
+from chromadb.api.types import Documents as ChromaDocuments
+from chromadb.api.types import (
+    EmbeddingFunction,
+    Embeddings,
+)
 from chromadb.utils import embedding_functions
 from fastapi import (
     FastAPI,
@@ -75,16 +80,58 @@ app.state.TOP_K = RAG_TOP_K
 app.state.OPENAI_API_KEYS = OPENAI_API_KEYS
 app.state.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
 
-if app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0] and "text-embedding" in app.state.RAG_EMBEDDING_MODEL:
+
+class LiteralHashEmbeddingFunction(EmbeddingFunction[ChromaDocuments]):
+    """A simple embedding function that hashes the input documents as a list of floats."""
+
+    def _hash_document(self, document: str) -> List[float]:
+        # Calculate the SHA-256 hash of the document
+        hash_object = hashlib.sha256(document.encode())
+        hash_list = list(hash_object.digest())
+        float_list = [float(x) / 255.0 for x in hash_list]
+        return float_list
+
+    def __call__(self, input: ChromaDocuments) -> Embeddings:
+        # Transform the input documents into embeddings
+        embeddings = [self._hash_document(doc) for doc in input]
+        return cast(Embeddings, embeddings)
+
+
+class Word2VecEmbeddingFunction(EmbeddingFunction[ChromaDocuments]):
+    """Word2Vec embedding function that encodes the input documents as a list of floats."""
+
+    def __init__(self, model_name: str = "w2v-light-tencent-chinese"):
+        try:
+            from text2vec import Word2Vec
+        except ImportError:
+            raise ValueError(
+                "The text2vec python package is not installed. Please install it with `pip install text2vec`"
+            )
+        self._model = Word2Vec(model_name_or_path=model_name)
+
+    def __call__(self, input: ChromaDocuments) -> Embeddings:
+        return cast(
+            Embeddings, self._model.encode(list(input)).tolist()
+        )  # noqa E501
+
+
+if "text-embedding" in app.state.RAG_EMBEDDING_MODEL and app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
     app.state.sentence_transformer_ef = embedding_functions.OpenAIEmbeddingFunction(
         api_key=app.state.OPENAI_API_KEYS[0],
         api_base=app.state.OPENAI_API_BASE_URLS[0],
         model_name=app.state.RAG_EMBEDDING_MODEL,
     )
-else:
+elif "word2vec" in app.state.RAG_EMBEDDING_MODEL:
     app.state.sentence_transformer_ef = embedding_functions.Text2VecEmbeddingFunction(
         model_name=app.state.RAG_EMBEDDING_MODEL
     )
+elif "w2v" in app.state.RAG_EMBEDDING_MODEL:
+    app.state.sentence_transformer_ef = Word2VecEmbeddingFunction(
+        model_name=app.state.RAG_EMBEDDING_MODEL
+    )
+else:
+    app.state.sentence_transformer_ef = LiteralHashEmbeddingFunction()
+
 origins = ["*"]
 
 app.add_middleware(
@@ -184,10 +231,16 @@ async def update_embedding_model(
             )
         else:
             raise ValueError("No OpenAI API key found")
-    else:
+    elif "w2v" in app.state.RAG_EMBEDDING_MODEL:
+        app.state.sentence_transformer_ef = Word2VecEmbeddingFunction(
+            model_name=app.state.RAG_EMBEDDING_MODEL
+        )
+    elif app.state.RAG_EMBEDDING_MODEL:
         app.state.sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(
             model_name=app.state.RAG_EMBEDDING_MODEL
         )
+    else:
+        app.state.sentence_transformer_ef = LiteralHashEmbeddingFunction()
     logger.debug(f"Update app.state.sentence_transformer_ef: {app.state.sentence_transformer_ef}")
 
     return {
