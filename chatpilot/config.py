@@ -152,7 +152,8 @@ MODEL_TOKEN_LIMIT = {
 # Dashscope Tongyi Qwen model
 DASHSCOPE_API_KEY = os.environ.get("DASHSCOPE_API_KEY", "")
 
-MAX_DAILY_REQUESTS = int(os.environ.get("MAX_DAILY_REQUESTS", -1))
+RPD = int(os.environ.get("RPD", -1))  # RPD(Request Pre Day)
+RPM = int(os.environ.get("RPM", -1))  # RPM(Request Per Minute)
 
 # Search engine
 SERPER_API_KEY = os.environ.get("SERPER_API_KEY", None)

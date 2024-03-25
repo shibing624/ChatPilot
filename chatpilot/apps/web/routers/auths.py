@@ -3,6 +3,7 @@ import re
 from fastapi import APIRouter, status
 from fastapi import Depends, HTTPException
 from fastapi import Request
+from loguru import logger
 from pydantic import BaseModel
 
 from chatpilot.apps.auth_utils import (
@@ -99,6 +100,8 @@ async def signin(request: Request, form_data: SigninForm):
             data={"id": user.id},
             expires_delta=parse_duration(request.app.state.JWT_EXPIRES_IN),
         )
+        if user.role == "admin":
+            logger.debug(f"Admin user signed in: {user.email}, token: {token}")
 
         return {
             "token": token,

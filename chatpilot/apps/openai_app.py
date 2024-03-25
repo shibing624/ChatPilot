@@ -7,7 +7,8 @@ import asyncio
 import hashlib
 import json
 import time
-from datetime import datetime
+from collections import defaultdict
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
 
@@ -33,7 +34,8 @@ from chatpilot.config import (
     MODEL_FILTER_LIST,
     SERPER_API_KEY,
     OpenAIClientWrapper,
-    MAX_DAILY_REQUESTS,
+    RPD,
+    RPM,
     MODEL_TYPE
 )
 from chatpilot.constants import ERROR_MESSAGES
@@ -62,8 +64,44 @@ else:
 
 app.state.MODELS = {}
 
-# User request counter, format is {user_id: (date, count)}
-user_request_counts = {}
+# User request tracking
+user_request_tracker = defaultdict(lambda: {"daily": [], "minute": []})
+
+
+async def request_rate_limiter(
+        user=Depends(get_current_user),
+        max_daily_requests: int = RPD,
+        max_minute_requests: int = RPM
+):
+    """Unified request rate limiter for both RPD and RPM limits, with support for unlimited requests."""
+    if max_daily_requests <= 0 and max_minute_requests <= 0:
+        # 如果RPD和RPM都设置为-1，则不限制请求
+        return
+
+    now = datetime.now()
+    today = now.date()
+    current_minute = now.replace(second=0, microsecond=0)
+
+    user_requests = user_request_tracker[user.id]
+    logger.debug(f"request rate limiter, user: {user.email}, RPD: {max_daily_requests}, RPM: {max_minute_requests}.")
+    # 如果不是无限制，则进行请求记录和限制检查
+    if max_daily_requests > 0:
+        # 清理过期的每日请求记录
+        user_requests["daily"] = [dt for dt in user_requests["daily"] if dt.date() == today]
+        # 检查每日请求限制
+        if len(user_requests["daily"]) >= max_daily_requests:
+            raise HTTPException(status_code=429, detail=ERROR_MESSAGES.RPD_LIMIT)
+
+    if max_minute_requests > 0:
+        # 清理过期的每分钟请求记录
+        user_requests["minute"] = [dt for dt in user_requests["minute"] if dt > current_minute - timedelta(minutes=1)]
+        # 检查每分钟请求限制
+        if len(user_requests["minute"]) >= max_minute_requests:
+            raise HTTPException(status_code=429, detail=ERROR_MESSAGES.RPM_LIMIT)
+
+    # 记录新的请求
+    user_requests["daily"].append(now)
+    user_requests["minute"].append(now)
 
 
 @app.middleware("http")
@@ -108,7 +146,11 @@ async def update_openai_key(form_data: KeysUpdateForm, user=Depends(get_admin_us
 
 
 @app.post("/audio/speech")
-async def speech(request: Request, user=Depends(get_current_user)):
+async def speech(
+        request: Request,
+        user=Depends(get_current_user),
+        rate_limit=Depends(request_rate_limiter),
+):
     r = None
     try:
         api_key, base_url = app.state.CLIENT_MANAGER.get_next_key_base_url()
@@ -318,23 +360,15 @@ def proxy_other_request(api_key, base_url, path, body, method):
 
 
 @app.api_route("/{path:path}", methods=["POST"])
-async def proxy(path: str, request: Request, user=Depends(get_current_user)):
+async def proxy(
+        path: str,
+        request: Request,
+        user=Depends(get_current_user),
+        rate_limit=Depends(request_rate_limiter),
+):
     method = request.method
     logger.debug(f"Proxying request to OpenAI: {path}, method: {method}, "
                  f"user: {user.id} {user.name} {user.email} {user.role}")
-    if MAX_DAILY_REQUESTS > 0:
-        user_id = user.id
-        today = datetime.now().date()
-        if user_id in user_request_counts:
-            last_date, count = user_request_counts[user_id]
-            if last_date == today and count >= MAX_DAILY_REQUESTS:
-                raise HTTPException(status_code=429, detail=ERROR_MESSAGES.DAILY_TOO_MANY_REQUEST)
-            elif last_date == today:
-                user_request_counts[user_id] = (today, count + 1)
-            else:
-                user_request_counts[user_id] = (today, 1)
-        else:
-            user_request_counts[user_id] = (today, 1)
 
     if not app.state.OPENAI_API_KEYS[0]:
         raise HTTPException(status_code=401, detail=ERROR_MESSAGES.API_KEY_NOT_FOUND)

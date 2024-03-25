@@ -40,7 +40,7 @@ from chatpilot.apps.auth_utils import (
 from chatpilot.config import (
     MODEL_FILTER_ENABLED,
     MODEL_FILTER_LIST,
-    MAX_DAILY_REQUESTS,
+    RPD,
     DASHSCOPE_API_KEY,
 )
 from chatpilot.constants import ERROR_MESSAGES
@@ -299,19 +299,6 @@ async def proxy(path: str, request: Request, user=Depends(get_current_user)):
     method = request.method
     logger.debug(f"Proxying request to Dashscope: {path}, method: {method}, "
                  f"user: {user.id} {user.name} {user.email} {user.role}")
-    if MAX_DAILY_REQUESTS > 0:
-        user_id = user.id
-        today = datetime.now().date()
-        if user_id in user_request_counts:
-            last_date, count = user_request_counts[user_id]
-            if last_date == today and count >= MAX_DAILY_REQUESTS:
-                raise HTTPException(status_code=429, detail=ERROR_MESSAGES.DAILY_TOO_MANY_REQUEST)
-            elif last_date == today:
-                user_request_counts[user_id] = (today, count + 1)
-            else:
-                user_request_counts[user_id] = (today, 1)
-        else:
-            user_request_counts[user_id] = (today, 1)
     if not app.state.DASHSCOPE_API_KEY:
         raise HTTPException(status_code=401, detail=ERROR_MESSAGES.API_KEY_NOT_FOUND)
 
