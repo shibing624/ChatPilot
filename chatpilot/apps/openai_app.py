@@ -83,13 +83,14 @@ async def request_rate_limiter(
     current_minute = now.replace(second=0, microsecond=0)
 
     user_requests = user_request_tracker[user.id]
-    logger.debug(f"request rate limiter, user: {user.email}, RPD: {max_daily_requests}, RPM: {max_minute_requests}.")
+
     # 如果不是无限制，则进行请求记录和限制检查
     if max_daily_requests > 0:
         # 清理过期的每日请求记录
         user_requests["daily"] = [dt for dt in user_requests["daily"] if dt.date() == today]
         # 检查每日请求限制
         if len(user_requests["daily"]) >= max_daily_requests:
+            logger.warning(f"Reach request rate limit, user: {user.email}, RPD: {max_daily_requests}")
             raise HTTPException(status_code=429, detail=ERROR_MESSAGES.RPD_LIMIT)
 
     if max_minute_requests > 0:
@@ -97,6 +98,7 @@ async def request_rate_limiter(
         user_requests["minute"] = [dt for dt in user_requests["minute"] if dt > current_minute - timedelta(minutes=1)]
         # 检查每分钟请求限制
         if len(user_requests["minute"]) >= max_minute_requests:
+            logger.warning(f"Reach request rate limit, user: {user.email}, RPM: {max_minute_requests}")
             raise HTTPException(status_code=429, detail=ERROR_MESSAGES.RPM_LIMIT)
 
     # 记录新的请求
