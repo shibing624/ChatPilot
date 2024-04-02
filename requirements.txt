@@ -57,3 +57,4 @@ pdf2image
 pillow_heif
 pytesseract
 pikepdf
+text2vec
