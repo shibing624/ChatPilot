@@ -436,7 +436,7 @@ async def proxy(
                 kind = event['event']
                 if kind in ['on_tool_start', 'on_chat_model_stream']:
                     if kind == "on_tool_start":
-                        c = f"\nInvoking: `{event['name']}`\n```\n{event['data'].get('input', '')}\n```\n"
+                        c = event['data'].get('input', '')
                     else:
                         c = event['data']['chunk'].content
 
