@@ -16,3 +16,6 @@ uploads
 .ipynb_checkpoints
 **/*.db
 _test
+.svelte-kit
+web/node_modules
+web/.svelte-kit

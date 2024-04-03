@@ -20,4 +20,4 @@ if test "$WEBUI_SECRET_KEY $WEBUI_JWT_SECRET_KEY" = " "; then
 fi
 
 export WEBUI_SECRET_KEY="$WEBUI_SECRET_KEY"
-python -m uvicorn chatpilot.server:app --host 0.0.0.0 --port "$PORT" --forwarded-allow-ips '*'
+uvicorn chatpilot.server:app --host 0.0.0.0 --port "$PORT" --forwarded-allow-ips '*'

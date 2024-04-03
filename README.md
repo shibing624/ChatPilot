@@ -51,8 +51,20 @@ pip install -e .
 
 
 ## Usage
+### 容器部署 （推荐）
+```shell
+docker pull shibing624/chatpilot
 
-### 1. 构建前端web
+docker run -d -p 8080:8080 \
+   -e MODEL_TYPE=openai \
+   -e OPENAI_API_KEYS=sk-xxxx \
+   -e OPENAI_API_BASE_URLS=https://xxx \
+   shibing624/chatpilot
+```
+
+### 本地部署
+
+#### 1. 构建前端web
 
 两种方法构建前端：
 1. 下载打包并编译好的前端 [buid.zip](https://github.com/shibing624/ChatPilot/releases/download/v0.0.2/build.zip) 解压到项目web目录下。
@@ -77,7 +89,7 @@ npm run build
 ```
 输出：项目`web`目录产出`build`文件夹，包含了前端编译输出文件。
 
-### 2. 启动后端服务
+#### 2. 启动后端服务
 
 ```shell
 cd ..

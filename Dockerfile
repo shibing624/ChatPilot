@@ -18,7 +18,7 @@ ENV DO_NOT_TRACK true
 # RAG Embedding Model Settings
 ENV RAG_EMBEDDING_MODEL="shibing624/text2vec-base-multilingual"
 
-RUN pip3 install torch --index-url https://download.pytorch.org/whl/cpu
-RUN pip3 install -r requirements.txt
+RUN pip3 install torch --index-url https://download.pytorch.org/whl/cpu --no-cache-dir
+RUN pip3 install -r requirements.txt --no-cache-dir
 
 CMD ["bash", "start.sh"]
