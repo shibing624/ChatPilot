@@ -410,6 +410,7 @@ async def proxy(
             return proxy_other_request(api_key, base_url, path, body, method)
 
         # Create a new ChatAgent instance for each request
+        agent_type = "function_call" if 'openai' in MODEL_TYPE else "react"
         chat_agent = ChatAgent(
             model_type=MODEL_TYPE,
             model_name=model_name,
@@ -424,6 +425,7 @@ async def proxy(
             max_iterations=2,
             max_execution_time=60,
             system_prompt=system_prompt,
+            agent_type=agent_type,
         )
         events = await chat_agent.astream_run(user_question, chat_history=history)
         created = int(time.time())
@@ -433,7 +435,7 @@ async def proxy(
             async for event in events:
                 kind = event['event']
                 if kind in ['on_tool_start', 'on_chat_model_stream']:
-                    if kind == "on_tool_start":
+                    if kind == "on_tool_start" and agent_type == "function_call":
                         c = f"Invoking: `{event['name']}`\n```\n{event['data'].get('input', '')}\n```\n\n"
                     else:
                         c = event['data']['chunk'].content
