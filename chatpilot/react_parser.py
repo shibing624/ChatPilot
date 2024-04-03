@@ -88,12 +88,18 @@ class ReActParserAndNoTool(ReActSingleInputOutputParser):
         elif not re.search(
             r"[\s]*Action\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)", text, re.DOTALL
         ):
-            raise OutputParserException(
-                f"Could not parse LLM output: `{text}`",
-                observation=MISSING_ACTION_INPUT_AFTER_ACTION_ERROR_MESSAGE,
-                llm_output=text,
-                send_to_llm=True,
+            # raise OutputParserException(
+            #     f"Could not parse LLM output: `{text}`",
+            #     observation=MISSING_ACTION_INPUT_AFTER_ACTION_ERROR_MESSAGE,
+            #     llm_output=text,
+            #     send_to_llm=True,
+            # )
+            return AgentFinish(
+                {"output": text.split(OBS_ACTION)[-1].strip()}, text
             )
         else:
-            raise OutputParserException(f"Could not parse LLM output: `{text}`")
+            # raise OutputParserException(f"Could not parse LLM output: `{text}`")
+            return AgentFinish(
+                {"output": text.split(OBS_ACTION)[-1].strip()}, text
+            )
 
