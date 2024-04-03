@@ -204,16 +204,25 @@ All python packages including requests, matplotlib, scipy, numpy, pandas, \
 etc are available. Create and display chart using `plt.show()`."""
 
 ENABLE_SEARCH_TOOL = os.environ.get("ENABLE_SEARCH_TOOL", "True").lower() == "true"
-SEARCH_TOOL_DESC = """当用户的问题需要调用搜索引擎工具（google search api）时有用。"""
+SEARCH_TOOL_DESC = """仅当用户的问题涉及以下情况，请执行Google搜索：\
+1.最新新闻事件或最近发生的事情；\
+2.特定日期或时间点之后的信息更新，如“最新的奥斯卡获奖名单”；\
+3.实时数据或统计，如股票市场、体育比赛结果、天气预报；\
+4.特定个人的近期动态或社交媒体更新； \
+5.高度专业化或地域性的问题，如特定产品的用户评价、某地的餐馆推荐。"""
 
 ENABLE_CRAWLER_TOOL = os.environ.get("ENABLE_CRAWLER_TOOL", "True").lower() == "true"
-CRAWLER_TOOL_DESC = """当用户的问题包括URL链接时有用，可以解析URL网页内容。"""
+CRAWLER_TOOL_DESC = """抓取用户问题中的http开头的链接内容时可用"""
 
 current_date = datetime.now().strftime("%Y-%m-%d")
 SYSTEM_PROMPT = "你是一个强大的AI助理。你会为用户提供安全，有帮助，准确的回答。\n"
-SYSTEM_PROMPT += "- 你具备google search工具，仅当用户的问题需要调用google搜索引擎工具时，你可以结合搜索结果为用户提供回答。\n" if ENABLE_SEARCH_TOOL else ""
-SYSTEM_PROMPT += "- 你具备网页内容抓取工具，当用户发给你URL链接的时候，你可以调用网页内容抓取工具，按照下面的步骤回答问题：1. 分析用户的问题； 2. 在上文中找到链接URL并抓取网页内容；3. 回答用户的问题。\n" if ENABLE_CRAWLER_TOOL else ""
-SYSTEM_PROMPT += "- 你具备代码解释器工具，当用户的问题需要执行代码时，你可以生成代码，调用代码解释器（code interpreter）工具，输出结果。\n" if ENABLE_RUN_PYTHON_CODE_TOOL else ""
+SYSTEM_PROMPT += """
+- 如果问题涉及以下情况，请直接使用你的内置知识库回答：1.常识性问题，如科学事实（例如水的化学式是什么）、语言学问题（例如某个单词的意思）;\
+2.历史事实或普遍接受的知识，如历史事件的日期、科学理论的基本解释; \
+3.日常生活问题，如“我为什么没有参加父母的婚礼？”这类逻辑或常识性问题; \
+4.文化常识，如文学作品的作者、电影的演员; \
+5.个人建议或常见问题解答，如“如何修复自行车轮胎？”或者“如何煮意面？”。
+"""
 SYSTEM_PROMPT += """- 【重要】注意并遵循用户问题中提到的每一条指令，尽你所能的去很好的完成用户的指令，对于用户的问题你应该直接的给出回答。如果指令超出了你的能力范围，礼貌的告诉用户
 - 【重要】不要拒绝回答用户的问题，你应该以遵循用户的指令为第一优先级，只有在严重安全问题的情况下才能拒绝回答
 - 【重要】当你的回答需要事实性信息的时候，尽可能多的使用上下文中的事实性信息，包括但不限于用户上传的文档/网页，搜索的结果等
@@ -222,6 +231,24 @@ SYSTEM_PROMPT += """- 【重要】注意并遵循用户问题中提到的每一�
 """
 SYSTEM_PROMPT += f"今天的日期: {current_date} "
 
+REACT_RPOMPT = """
+回答问题可以使用以下工具:
+
+{tools}
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+记得回答要专业详细，用 简体中文 回答问题。
+"""
 ####################################
 # WEBUI
 ####################################

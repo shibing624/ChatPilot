@@ -5,20 +5,20 @@
 """
 import os
 from typing import List, Optional
-from langchain_openai import ChatOpenAI, AzureChatOpenAI
+
 import tiktoken
-from langchain.agents import AgentExecutor
-from langchain.agents import create_react_agent
+from langchain.agents import AgentExecutor, Tool
 from langchain.agents.format_scratchpad.openai_tools import format_to_openai_tool_messages
 from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
 from langchain.tools import StructuredTool
+from langchain.tools.render import render_text_description
 from langchain_community.chat_models import ChatTongyi
 from langchain_community.document_loaders import WebBaseLoader, OnlinePDFLoader
 from langchain_community.tools import E2BDataAnalysisTool
 from langchain_community.utilities import GoogleSerperAPIWrapper, DuckDuckGoSearchAPIWrapper
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.tools import Tool
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from loguru import logger
 
 from chatpilot.config import (
@@ -30,7 +30,9 @@ from chatpilot.config import (
     ENABLE_SEARCH_TOOL,
     ENABLE_CRAWLER_TOOL,
     ENABLE_RUN_PYTHON_CODE_TOOL,
+    REACT_RPOMPT,
 )
+from chatpilot.react_parser import ReActParserAndNoTool
 
 
 class ChatAgent:
@@ -41,11 +43,12 @@ class ChatAgent:
             model_api_key: str = os.getenv("OPENAI_API_KEY"),
             model_api_base: str = os.getenv("OPENAI_API_BASE"),
             search_name: Optional[str] = "serper",
-            enable_search_tool: bool = ENABLE_SEARCH_TOOL,
-            enable_crawler_tool: bool = ENABLE_CRAWLER_TOOL,
-            enable_run_python_code_tool: bool = ENABLE_RUN_PYTHON_CODE_TOOL,
+            agent_type: str = "react",
+            enable_search_tool: Optional[bool] = None,
+            enable_crawler_tool: Optional[bool] = None,
+            enable_run_python_code_tool: Optional[bool] = None,
             verbose: bool = True,
-            max_iterations: int = 3,
+            max_iterations: int = 2,
             max_execution_time: int = 120,
             temperature: float = 0.7,
             num_memory_turns: int = -1,
@@ -58,11 +61,12 @@ class ChatAgent:
         """
         Initializes the ChatAgent with the given parameters.
 
-        :param model_type: The type of the model, such as "openai" or "azure".
+        :param model_type: The type of the model, such as "openai" / "azure" / "dashscope".
         :param model_name: The model name of OpenAI.
         :param model_api_key: The API keys for the OpenAI API.
         :param model_api_base: The base URLs for the OpenAI API.
         :param search_name: The name of the search engine to use, such as "serper" or "duckduckgo".
+        :param agent_type: The type of the agent, such as "react" or openai "function_call".
         :param enable_search_tool: If True, enables the search tool.
         :param enable_crawler_tool: If True, enables the web URL crawler tool.
         :param enable_run_python_code_tool: If True, enables the run Python code tool.
@@ -92,6 +96,7 @@ class ChatAgent:
             logger.warning(f"Adjusted max_tokens={max_tokens} and max_context_tokens={max_context_tokens}")
         self.max_tokens = max_tokens
         self.max_context_tokens = max_context_tokens
+        self.agent_type = agent_type
         # Define llm
         if model_type == 'azure':
             self.llm = AzureChatOpenAI(
@@ -140,10 +145,12 @@ class ChatAgent:
         self.system_prompt = system_prompt if system_prompt else SYSTEM_PROMPT
 
         # Define tools
-        self.enable_search_tool = enable_search_tool
-        self.enable_crawler_tool = enable_crawler_tool
-        self.enable_run_python_code_tool = enable_run_python_code_tool
-        self.tools = self._initialize_tools()
+        enable_search_tool = enable_search_tool if enable_search_tool is not None else ENABLE_SEARCH_TOOL
+        enable_crawler_tool = enable_crawler_tool if enable_crawler_tool is not None else ENABLE_CRAWLER_TOOL
+        enable_run_python_code_tool = (
+            enable_run_python_code_tool if enable_run_python_code_tool is not None else ENABLE_RUN_PYTHON_CODE_TOOL
+        )
+        self.tools = self._initialize_tools(enable_search_tool, enable_crawler_tool, enable_run_python_code_tool)
 
         # Define agent
         self.chat_history = []
@@ -174,7 +181,7 @@ class ChatAgent:
         logger.debug(f"Initialized search engine: {self.search_name}")
         return search_engine
 
-    def _initialize_tools(self):
+    def _initialize_tools(self, enable_search_tool, enable_crawler_tool, enable_run_python_code_tool):
         """
         Initializes the tools used by the ChatAgent.
 
@@ -215,13 +222,13 @@ class ChatAgent:
         )
 
         tools = []
-        if self.enable_search_tool:
+        if enable_search_tool:
             # Define the search engine
-            self.search_engine = self._initialize_search_engine()
-            tools.append(Tool(name="Search", func=self.search_engine.run, description=SEARCH_TOOL_DESC))
-        if self.enable_run_python_code_tool:
+            search_engine = self._initialize_search_engine()
+            tools.append(Tool(name="Search", func=search_engine.run, description=SEARCH_TOOL_DESC))
+        if enable_run_python_code_tool:
             tools.append(run_python_code_tool)
-        if self.enable_crawler_tool:
+        if enable_crawler_tool:
             tools.append(web_url_crawler_tool)
         return tools
 
@@ -231,18 +238,19 @@ class ChatAgent:
 
         :return: An instance of AgentExecutor.
         """
-
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", self.system_prompt),
-                MessagesPlaceholder(variable_name="chat_history", optional=True),
-                ("user", "{input}"),
-                MessagesPlaceholder(variable_name="agent_scratchpad"),
-            ]
-        )
-        # logger.debug(f"Initialized ChatAgent prompt: {prompt}")
-        if self.model_type in ['openai', 'azure']:
-            llm_with_tools = self.llm.bind_tools(self.tools)
+        if self.agent_type == "react":
+            tool_prompt = REACT_RPOMPT.format(
+                tools=render_text_description(list(self.tools)),
+                tool_names=", ".join([t.name for t in self.tools]))
+            prompt = ChatPromptTemplate.from_messages(
+                [
+                    ("system", self.system_prompt + tool_prompt),
+                    MessagesPlaceholder(variable_name="chat_history", optional=True),
+                    ("user", "{input}"),
+                    MessagesPlaceholder(variable_name="agent_scratchpad"),
+                ]
+            )
+            llm_with_stop = self.llm.bind(stop=["\nObservation"])
             agent = (
                     {
                         "input": lambda x: x["input"],
@@ -251,11 +259,33 @@ class ChatAgent:
                             "chat_history"] else [],
                     }
                     | prompt
-                    | llm_with_tools
-                    | OpenAIToolsAgentOutputParser()
+                    | llm_with_stop
+                    | ReActParserAndNoTool()
             )
         else:
-            agent = create_react_agent(self.llm, self.tools, prompt)
+            prompt = ChatPromptTemplate.from_messages(
+                [
+                    ("system", self.system_prompt),
+                    MessagesPlaceholder(variable_name="chat_history", optional=True),
+                    ("user", "{input}"),
+                    MessagesPlaceholder(variable_name="agent_scratchpad"),
+                ]
+            )
+            if self.model_type in ['openai', 'azure']:
+                agent = (
+                        {
+                            "input": lambda x: x["input"],
+                            "agent_scratchpad": lambda x: format_to_openai_tool_messages(x["intermediate_steps"]),
+                            "chat_history": lambda x: x["chat_history"] if "chat_history" in x and x[
+                                "chat_history"] else [],
+                        }
+                        | prompt
+                        | self.llm.bind_tools(self.tools)
+                        | OpenAIToolsAgentOutputParser()
+                )
+            else:
+                raise ValueError(f"Unsupported model type: {self.model_type} when agent_type is not 'react'")
+        # logger.debug(f"Initialized agent executor, prompt: {prompt.pretty_repr()}")
         return AgentExecutor(
             agent=agent,
             tools=self.tools,
@@ -267,6 +297,7 @@ class ChatAgent:
         ).with_config({"run_name": "ChatAgent"})
 
     def _initialize_chat_chain(self):
+        """legacy chat chain."""
         prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", self.system_prompt),
@@ -274,8 +305,8 @@ class ChatAgent:
                 ("user", "{input}"),
             ]
         )
-        # parser = StrOutputParser()
         chain = prompt | self.llm | OpenAIToolsAgentOutputParser()
+        # logger.debug(f"Initialized chat chain, prompt: {prompt.pretty_repr()}")
         return chain.with_config({"run_name": "ChatAgent"})
 
     def count_token_length(self, text):
