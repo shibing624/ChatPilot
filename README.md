@@ -51,16 +51,6 @@ pip install -e .
 
 
 ## Usage
-### 容器部署 （推荐）
-```shell
-docker pull shibing624/chatpilot
-
-docker run -d -p 8080:8080 \
-   -e MODEL_TYPE=openai \
-   -e OPENAI_API_KEYS=sk-xxxx \
-   -e OPENAI_API_BASE_URLS=https://xxx \
-   shibing624/chatpilot
-```
 
 ### 本地部署
 
@@ -73,7 +63,7 @@ docker run -d -p 8080:8080 \
 Requirements:
 
 - 🐰 [Node.js](https://nodejs.org/en) >= 20.10 or [Bun](https://bun.sh) >= 1.0.21
-- 🐍 [Python](https://python.org) >= 3.9
+- 🐍 [Python](https://python.org) >= 3.10
 
 ```sh
 git clone https://github.com/shibing624/ChatPilot.git
@@ -99,6 +89,16 @@ bash start.sh
 好了，现在你的应用正在运行：http://0.0.0.0:8080 Enjoy! 😄
 
 
+### 容器部署
+```shell
+docker pull shibing624/chatpilot
+
+docker run -d -p 8080:8080 \
+   -e MODEL_TYPE=openai \
+   -e OPENAI_API_KEYS=sk-xxxx \
+   -e OPENAI_API_BASE_URLS=https://xxx \
+   shibing624/chatpilot
+```
 
 ### 命令行模式（CLI）
 
