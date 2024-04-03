@@ -3,13 +3,11 @@
 @author:XuMing(xuming624@qq.com)
 @description: 
 """
-from langchain.agents.output_parsers import ReActSingleInputOutputParser
 import re
 from typing import Union
 
+from langchain.agents.output_parsers import ReActSingleInputOutputParser
 from langchain_core.agents import AgentAction, AgentFinish
-from langchain_core.exceptions import OutputParserException
-
 
 FINAL_ANSWER_ACTION = "Final Answer:"
 THOUGHT_ACTION = "Thought:"
@@ -51,7 +49,6 @@ class ReActParserAndNoTool(ReActSingleInputOutputParser):
 
     """
 
-
     def parse(self, text: str) -> Union[AgentAction, AgentFinish]:
         includes_answer = FINAL_ANSWER_ACTION in text
         regex = (
@@ -60,8 +57,11 @@ class ReActParserAndNoTool(ReActSingleInputOutputParser):
         action_match = re.search(regex, text, re.DOTALL)
         if action_match:
             if includes_answer:
-                raise OutputParserException(
-                    f"{FINAL_ANSWER_AND_PARSABLE_ACTION_ERROR_MESSAGE}: {text}"
+                # raise OutputParserException(
+                #     f"{FINAL_ANSWER_AND_PARSABLE_ACTION_ERROR_MESSAGE}: {text}"
+                # )
+                return AgentFinish(
+                    {"output": text.split(FINAL_ANSWER_ACTION)[-1].strip()}, text
                 )
             action = action_match.group(1).strip()
             action_input = action_match.group(2)
@@ -86,7 +86,7 @@ class ReActParserAndNoTool(ReActSingleInputOutputParser):
                 {"output": text.split(OBS_ACTION)[-1].strip()}, text
             )
         elif not re.search(
-            r"[\s]*Action\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)", text, re.DOTALL
+                r"[\s]*Action\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)", text, re.DOTALL
         ):
             # raise OutputParserException(
             #     f"Could not parse LLM output: `{text}`",
@@ -102,4 +102,3 @@ class ReActParserAndNoTool(ReActSingleInputOutputParser):
             return AgentFinish(
                 {"output": text.split(OBS_ACTION)[-1].strip()}, text
             )
-
