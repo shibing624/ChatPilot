@@ -52,7 +52,7 @@ pip install -e .
 
 ## Usage
 
-### 本地部署
+### Local deployment
 
 #### 1. Build front-end web
 
@@ -88,7 +88,7 @@ bash start.sh
 ```
 Ok, now your application is running: http://0.0.0.0:8080 Enjoy! 😄
 
-### Docker Deploy
+### Docker deployment
 ```shell
 docker pull shibing624/chatpilot
 
