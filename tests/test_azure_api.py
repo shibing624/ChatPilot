@@ -3,7 +3,6 @@
 @author:XuMing(xuming624@qq.com)
 @description: 
 """
-import os
 import sys
 import unittest
 
@@ -11,14 +10,9 @@ sys.path.append('..')
 from chatpilot import ChatAgent
 from chatpilot.config import OPENAI_API_KEY
 
-os.environ['OPENAI_API_VERSION'] = '2023-05-15'
-os.environ['ENABLE_SEARCH_TOOL'] = "False"
-os.environ['ENABLE_CRAWLER_TOOL'] = "False"
-os.environ['ENABLE_RUN_PYTHON_CODE_TOOL'] = "False"
+
 class AZTestCase(unittest.TestCase):
-
     def test_tool_usage(self):
-
         m = ChatAgent(
             model_type='azure',
             model_name='gpt-35-turbo',
