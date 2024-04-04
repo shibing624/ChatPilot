@@ -29,6 +29,7 @@ class AZTestCase(unittest.TestCase):
             streaming=False,
         )
         print(m.llm)
+        print(m.run('https://python.langchain.com/docs/integrations/tools/search_tools 总结这个文章', []))
         print(m.run('一句话介绍南京', []))
         i = "俄乌战争的最新进展?"
         print(i)
@@ -38,6 +39,19 @@ class AZTestCase(unittest.TestCase):
 
         print(m.run("计算88888*4444.3=?"))
         print(m.run("我前面问了啥"))
+
+    def test_url_crawler(self):
+        m = ChatAgent(
+            model_type='azure',
+            model_name='gpt-35-turbo',
+            model_api_key=OPENAI_API_KEY,
+            model_api_base='https://westeurope.api.cognitive.microsoft.com/openai/deployments/gpt-35-turbo',
+            max_iterations=3,
+            max_execution_time=60,
+            streaming=False,
+        )
+        print(m.llm)
+        print(m.run('https://python.langchain.com/docs/integrations/tools/search_tools 总结这个文章', []))
 
     def test_stream(self):
         m = ChatAgent(
@@ -54,7 +68,6 @@ class AZTestCase(unittest.TestCase):
 
         import asyncio
         async def d():
-
             questions = [
                 "人体最大的器官是啥",
                 # "人体最大的器官是啥",

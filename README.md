@@ -1,4 +1,4 @@
-[**🇨🇳中文**](https://github.com/shibing624/ChatPilot/blob/main/README.md) | [**🌐English**](https://github.com/shibing624/ChatPilot/blob/main/README_EN.md) | [**📖文档/Docs**](https://github.com/shibing624/ChatPilot/wiki) | [**🤖模型/Models**](https://huggingface.co/shibing624) 
+[**🇨🇳中文**](https://github.com/shibing624/ChatPilot/blob/main/README.md) | [**🌐English**](https://github.com/shibing624/ChatPilot/blob/main/README_EN.md) 
 
 <div align="center">
   <a href="https://github.com/shibing624/ChatPilot">
@@ -18,14 +18,16 @@
 [![Wechat Group](https://img.shields.io/badge/wechat-group-green.svg?logo=wechat)](#Contact)
 
 
-**ChatPilot**: Chat with Agent. 基于chat agent实现了联网搜索，文件、网址对话功能（类kimi chat，文件，拖进来；网址，发出来），支持OpenAI API。
+**ChatPilot**: 实现AgentChat对话，支持Google搜索、文件网址对话（RAG）、代码解释器功能，复现Kimi Chat(文件，拖进来；网址，发出来)，支持OpenAI/Azure API。
 
 
 ## Features
 
-- 本项目基于Agent实现了搜索问答
-- 本项目基于Agent实现了文件对话(RAG)，实现了通过URL自动解析内容功能，复现了 kimi chat(文件，拖进来；网址，发出来) 的文件、网址对话功能
-- 本项目基于Agent实现了python代码解释器，支持E2B虚拟环境和本地python编译器环境运行代码
+- 本项目基于LangChain实现了ReAct和OpenAI Function Call的Agent问答对话，支持如下工具自动调用：
+  - 联网搜索工具：Google Search API（Serper/DuckDuckGo）
+  - URL自动解析工具：复现了Kimi Chat网址发出来功能
+  - Python代码解释器：支持E2B虚拟环境和本地python编译器环境运行代码
+- 本项目基于LangChain实现了支持query改写的检索增强RAG文件问答
 - 支持前后端服务分离，前端使用Svelte，后端使用FastAPI
 - 支持语音输入输出，支持图像生成
 - 支持用户管理，权限控制，支持聊天记录导入导出

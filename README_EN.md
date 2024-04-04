@@ -1,100 +1,150 @@
-[**🇨🇳中文**](https://github.com/shibing624/ChatPilot/blob/main/README.md) | [**🌐English**](https://github.com/shibing624/ChatPilot/blob/main/README_EN.md) | [**📖文档/Docs**](https://github.com/shibing624/ChatPilot/wiki) | [**🤖模型/Models**](https://huggingface.co/shibing624) 
+[**🇨🇳中文**](https://github.com/shibing624/ChatPilot/blob/main/README.md) | [**🌐English**](https://github.com/shibing624/ChatPilot/blob/main/README_EN.md) 
 
 <div align="center">
   <a href="https://github.com/shibing624/ChatPilot">
-    <img src="https://github.com/shibing624/ChatPilot/blob/main/docs/logo.png" height="150" alt="Logo">
+    <img src="https://github.com/shibing624/ChatPilot/blob/main/docs/favicon.png" height="150" alt="Logo">
   </a>
 </div>
 
 -----------------
 
-# ChatPilot: chat agent
+# ChatPilot: Chat Agent
 [![PyPI version](https://badge.fury.io/py/ChatPilot.svg)](https://badge.fury.io/py/ChatPilot)
 [![Downloads](https://static.pepy.tech/badge/ChatPilot)](https://pepy.tech/project/ChatPilot)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![License Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![python_version](https://img.shields.io/badge/Python-3.5%2B-green.svg)](requirements.txt)
+[![python_version](https://img.shields.io/badge/Python-3.9%2B-green.svg)](requirements.txt)
 [![GitHub issues](https://img.shields.io/github/issues/shibing624/ChatPilot.svg)](https://github.com/shibing624/ChatPilot/issues)
 [![Wechat Group](https://img.shields.io/badge/wechat-group-green.svg?logo=wechat)](#Contact)
 
+**ChatPilot**: Implements AgentChat dialogue, supports Google search, file URL dialogue (RAG), code interpreter function, reproduces Kimi Chat (file, drag in; URL, send out), supports OpenAI/Azure API.
 
-**ChatPilot**: Text to Vector, Get Sentence Embeddings. 文本向量化，把文本(包括词、句子、段落)表征为向量矩阵。
-
-**ChatPilot**实现了Word2Vec、RankBM25、BERT、Sentence-BERT、CoSENT等多种文本表征、文本相似度计算模型，并在文本语义匹配（相似度计算）任务上比较了各模型的效果。
 
 ## Features
-### Agent
 
-1. search
-2. rag
-3. chat
-4. crawler
-
+- This project implements the Agent question and answer dialogue of ReAct and OpenAI Function Call based on LangChain, and supports the automatic calling of the following tools:
+   - Internet search tool: Google Search API (Serper/DuckDuckGo)
+   - URL automatic parsing tool: reproduces the function of sending Kimi Chat URL
+   - Python code interpreter: supports E2B virtual environment and local python compiler environment to run code
+- This project implements retrieval-enhanced RAG file Q&A that supports query rewriting based on LangChain
+- Supports separation of front-end and back-end services. The front-end uses Svelte and the back-end uses FastAPI.
+- Support voice input and output, support image generation
+- Support user management, permission control, support import and export of chat records
 ## Demo
 
-Official Demo: https://www.ChatPilot.com/product/short_text_sim/
+Official Demo: https://chat.mulanai.com
 
-HuggingFace Demo: https://huggingface.co/spaces/shibing624/ChatPilot
-
-![](https://github.com/shibing624/ChatPilot/blob/main/docs/hf.png)
-
-run example: [examples/gradio_demo.py](https://github.com/shibing624/ChatPilot/blob/main/examples/gradio_demo.py) to see the demo:
-```shell
-python examples/gradio_demo.py
-```
+![](https://github.com/shibing624/ChatPilot/blob/main/docs/shot.png)
 
 ## Install
 ```shell
-pip install -U ChatPilot
+pip install -U chatpilot
 ```
 
 or
 
 ```shell
-pip install -r requirements.txt
-
 git clone https://github.com/shibing624/ChatPilot.git
 cd ChatPilot
-pip install --no-deps .
+pip install -e .
 ```
+
 
 ## Usage
 
-#### FastAPI服务
+### 本地部署
 
-- 安装：
-```pip install fastapi uvicorn```
+#### 1. Build front-end web
 
-- 启动服务：
+Two ways to build the front end:
+1. Download the packaged and compiled front-end [buid.zip](https://github.com/shibing624/ChatPilot/releases/download/v0.0.2/build.zip) and extract it to the project web directory.
+2. Build the front end yourself using npm:
 
-example: [examples/fastapi_server_demo.py](https://github.com/shibing624/ChatPilot/blob/main/examples/fastapi_server_demo.py)
+Requirements:
+
+- 🐰 [Node.js](https://nodejs.org/en) >= 20.10 or [Bun](https://bun.sh) >= 1.0.21
+- 🐍 [Python](https://python.org) >= 3.10
+
+```sh
+git clone https://github.com/shibing624/ChatPilot.git
+cd ChatPilot/
+
+# Copying required .env file
+cp .env.example .env
+
+# Building Frontend Using Node
+cd web
+npm install
+npm run build
+```
+输出：项目`web`目录产出`build`文件夹，包含了前端编译输出文件。
+
+#### 2. Start the backend service
+
 ```shell
-cd examples
-python fastapi_server_demo.py
+cd ..
+pip install -r requirements.txt -U
+bash start.sh
+```
+Ok, now your application is running: http://0.0.0.0:8080 Enjoy! 😄
+
+### Docker Deploy
+```shell
+docker pull shibing624/chatpilot
+
+docker run -d -p 8080:8080 \
+   -e MODEL_TYPE=openai \
+   -e OPENAI_API_KEYS=sk-xxxx \
+   -e OPENAI_API_BASE_URLS=https://xxx \
+   shibing624/chatpilot
 ```
 
-- 调用服务：
-```shell
-curl -X 'GET' \
-  'http://0.0.0.0:8001/emb?q=hello' \
-  -H 'accept: application/json'
+### CLI
+
+code: [cli.py](https://github.com/shibing624/ChatPilot/blob/main/chatpilot/cli.py)
+
+```
+> chatpilot -h                                    
+usage: __main__.py [-h] [--model MODEL] [--search SEARCH] [--openai_api_key OPENAI_API_KEY] [--openai_api_base OPENAI_API_BASE] [--serper_api_key SERPER_API_KEY]
+
+
+
+chatpilot cli
+
+
+options:
+  -h, --help            show this help message and exit
+  --model MODEL         openai model name
+  --search SEARCH       search engine name, e.g. duckduckgo, serper
+  --openai_api_key OPENAI_API_KEY
+                        openai api key
+  --openai_api_base OPENAI_API_BASE
+                        openai api base url
+  --serper_api_key SERPER_API_KEY
+                        serper api key
 ```
 
+run：
 
+```shell
+pip install chatpilot -U
+chatpilot
+```
+
+> User: 输入问题, 如："一句话介绍北京"。
 
 ## Contact
 
-- Issue(建议)：[![GitHub issues](https://img.shields.io/github/issues/shibing624/ChatPilot.svg)](https://github.com/shibing624/ChatPilot/issues)
-- 邮件我：xuming: xuming624@qq.com
-- 微信我：加我*微信号：xuming624, 备注：姓名-公司-NLP* 进NLP交流群。
 
+- Issue (suggestion): [![GitHub issues](https://img.shields.io/github/issues/shibing624/ChatPilot.svg)](https://github.com/shibing624/ChatPilot/issues)
+- Email me: xuming: xuming624@qq.com
+- WeChat Me: Add me* WeChat ID: xuming624, Remarks: Name-Company-NLP* to join the NLP communication group.
 <img src="docs/wechat.jpeg" width="200" />
 
 
 ## Citation
 
-如果你在研究中使用了ChatPilot，请按如下格式引用：
-
+If you use ChatPilot in your research, please cite it in the following format:
 APA:
 ```latex
 Xu, M. ChatPilot: LLM agent toolkit (Version 0.0.2) [Computer software]. https://github.com/shibing624/ChatPilot
@@ -115,13 +165,18 @@ BibTeX:
 ## License
 
 
-授权协议为 [The Apache License 2.0](LICENSE)，可免费用做商业用途。请在产品说明中附加ChatPilot的链接和授权协议。
+The licensing agreement is [The Apache License 2.0](LICENSE), which is free for commercial use. Please attach the link to ChatPilot and the license agreement in the product description.
 
 
 ## Contribute
-项目代码还很粗糙，如果大家对代码有所改进，欢迎提交回本项目，在提交之前，注意以下两点：
+The project code is still very rough. If you have any improvements to the code, you are welcome to submit it back to this project. Before submitting, please pay attention to the following two points:
 
- - 在`tests`添加相应的单元测试
- - 使用`python -m pytest -v`来运行所有单元测试，确保所有单测都是通过的
+  - Add corresponding unit tests in `tests`
+  - Use `python -m pytest -v` to run all unit tests to ensure that all unit tests pass
 
-之后即可提交PR。
+You can then submit a PR.
+
+## Reference
+
+- [Open WebUI](https://github.com/shibing624/ChatPilot)
+- [langchain-ai/langchain](https://github.com/langchain-ai/langchain)

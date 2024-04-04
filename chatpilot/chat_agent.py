@@ -25,10 +25,10 @@ from chatpilot.config import (
     RUN_PYTHON_CODE_TOOL_DESC,
     SYSTEM_PROMPT,
     SEARCH_TOOL_DESC,
-    CRAWLER_TOOL_DESC,
+    URL_CRAWLER_TOOL_DESC,
     MODEL_TOKEN_LIMIT,
     ENABLE_SEARCH_TOOL,
-    ENABLE_CRAWLER_TOOL,
+    ENABLE_URL_CRAWLER_TOOL,
     ENABLE_RUN_PYTHON_CODE_TOOL,
     REACT_RPOMPT,
 )
@@ -45,15 +45,15 @@ class ChatAgent:
             search_name: Optional[str] = "serper",
             agent_type: str = "react",
             enable_search_tool: Optional[bool] = None,
-            enable_crawler_tool: Optional[bool] = None,
+            enable_url_crawler_tool: Optional[bool] = None,
             enable_run_python_code_tool: Optional[bool] = None,
             verbose: bool = True,
             max_iterations: int = 2,
             max_execution_time: int = 120,
             temperature: float = 0.7,
             num_memory_turns: int = -1,
-            max_tokens: int = 256,
-            max_context_tokens: int = 1024,
+            max_tokens: int = 512,
+            max_context_tokens: int = 2048,
             streaming: bool = False,
             system_prompt: str = SYSTEM_PROMPT,
             **kwargs
@@ -68,7 +68,7 @@ class ChatAgent:
         :param search_name: The name of the search engine to use, such as "serper" or "duckduckgo".
         :param agent_type: The type of the agent, such as "react" or openai "function_call".
         :param enable_search_tool: If True, enables the search tool.
-        :param enable_crawler_tool: If True, enables the web URL crawler tool.
+        :param enable_url_crawler_tool: If True, enables the web URL crawler tool.
         :param enable_run_python_code_tool: If True, enables the run Python code tool.
         :param verbose: If True, enables verbose logging.
         :param max_iterations: The maximum number of iterations for the agent executor.
@@ -146,11 +146,17 @@ class ChatAgent:
 
         # Define tools
         enable_search_tool = enable_search_tool if enable_search_tool is not None else ENABLE_SEARCH_TOOL
-        enable_crawler_tool = enable_crawler_tool if enable_crawler_tool is not None else ENABLE_CRAWLER_TOOL
+        enable_url_crawler_tool = (
+            enable_url_crawler_tool if enable_url_crawler_tool is not None else ENABLE_URL_CRAWLER_TOOL
+        )
         enable_run_python_code_tool = (
             enable_run_python_code_tool if enable_run_python_code_tool is not None else ENABLE_RUN_PYTHON_CODE_TOOL
         )
-        self.tools = self._initialize_tools(enable_search_tool, enable_crawler_tool, enable_run_python_code_tool)
+        self.tools = self._initialize_tools(
+            enable_search_tool,
+            enable_url_crawler_tool,
+            enable_run_python_code_tool
+        )
 
         # Define agent
         self.chat_history = []
@@ -181,54 +187,56 @@ class ChatAgent:
         logger.debug(f"Initialized search engine: {self.search_name}")
         return search_engine
 
-    def _initialize_tools(self, enable_search_tool, enable_crawler_tool, enable_run_python_code_tool):
+    def _initialize_tools(self, enable_search_tool, enable_url_crawler_tool, enable_run_python_code_tool):
         """
         Initializes the tools used by the ChatAgent.
 
         :return: A list of Tool instances.
         """
-        E2B_API_KEY = os.environ.get("E2B_API_KEY", None)
-        if E2B_API_KEY:
-            run_python_code_tool = E2BDataAnalysisTool(api_key=E2B_API_KEY)
-        else:
-            from langchain_experimental.tools import PythonREPLTool, PythonAstREPLTool  # noqa
-            run_python_code_tool = PythonAstREPLTool()
-        run_python_code_tool.description = RUN_PYTHON_CODE_TOOL_DESC
-
-        def web_url_crawler_func(web_url: str) -> str:
-            """Web url crawler tool."""
-            web_url = web_url.strip()
-            if web_url.endswith(".pdf"):
-                loader = OnlinePDFLoader(file_path=web_url)
-            else:
-                loader = WebBaseLoader(web_paths=web_url)
-            data = loader.load()
-
-            content = ""
-            for d in data:
-                title = d.metadata.get("title", "").strip()
-                desc = d.metadata.get("description", "").strip()
-                page_content = d.page_content.strip()
-                content += f"title: {title}\ndescription:{desc}\n{page_content}\n\n"
-            content_tokens = self.count_token_length(content)
-            if content_tokens > self.max_context_tokens:
-                content = content[:self.max_context_tokens]
-            return content
-
-        web_url_crawler_tool = StructuredTool.from_function(
-            func=web_url_crawler_func,
-            name="web_url_crawler",
-            description=CRAWLER_TOOL_DESC,
-        )
-
         tools = []
         if enable_search_tool:
             # Define the search engine
             search_engine = self._initialize_search_engine()
             tools.append(Tool(name="Search", func=search_engine.run, description=SEARCH_TOOL_DESC))
         if enable_run_python_code_tool:
+            E2B_API_KEY = os.environ.get("E2B_API_KEY", None)
+            if E2B_API_KEY:
+                run_python_code_tool = E2BDataAnalysisTool(api_key=E2B_API_KEY)
+            else:
+                from langchain_experimental.tools import PythonREPLTool, PythonAstREPLTool  # noqa
+                run_python_code_tool = PythonAstREPLTool()
+            run_python_code_tool.description = RUN_PYTHON_CODE_TOOL_DESC
+            logger.debug(f"Initialized run python code tool: {run_python_code_tool}")
+
             tools.append(run_python_code_tool)
-        if enable_crawler_tool:
+        if enable_url_crawler_tool:
+            def web_url_crawler_func(url: str) -> str:
+                """Web url crawler tool."""
+                url = url.strip()
+                if url.endswith(".pdf"):
+                    loader = OnlinePDFLoader(file_path=url)
+                else:
+                    loader = WebBaseLoader(url)
+                data = loader.load()
+
+                content = ""
+                for d in data:
+                    title = d.metadata.get("title", "").strip()
+                    desc = d.metadata.get("description", "").strip()
+                    page_content = d.page_content.strip()
+                    content += f"title: {title}\ndescription:{desc}\n{page_content}\n\n"
+                content_tokens = self.count_token_length(content)
+                if content_tokens > self.max_context_tokens:
+                    content = content[:self.max_context_tokens]
+                logger.debug(f"Web url crawler tool, url: {url}, content size: {len(content)}")
+                return content
+
+            web_url_crawler_tool = StructuredTool.from_function(
+                func=web_url_crawler_func,
+                name="WebUrlCrawler",
+                description=URL_CRAWLER_TOOL_DESC,
+            )
+
             tools.append(web_url_crawler_tool)
         return tools
 
@@ -239,12 +247,12 @@ class ChatAgent:
         :return: An instance of AgentExecutor.
         """
         if self.agent_type == "react":
-            tool_prompt = REACT_RPOMPT.format(
+            react_prompt = REACT_RPOMPT.format(
                 tools=render_text_description(list(self.tools)),
                 tool_names=", ".join([t.name for t in self.tools]))
             prompt = ChatPromptTemplate.from_messages(
                 [
-                    ("system", self.system_prompt + tool_prompt),
+                    ("system", self.system_prompt + react_prompt),
                     MessagesPlaceholder(variable_name="chat_history", optional=True),
                     ("user", "{input}"),
                     MessagesPlaceholder(variable_name="agent_scratchpad"),
