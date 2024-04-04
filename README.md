@@ -91,17 +91,6 @@ bash start.sh
 好了，现在你的应用正在运行：http://0.0.0.0:8080 Enjoy! 😄
 
 
-### 容器部署
-```shell
-docker pull shibing624/chatpilot
-
-docker run -d -p 8080:8080 \
-   -e MODEL_TYPE=openai \
-   -e OPENAI_API_KEYS=sk-xxxx \
-   -e OPENAI_API_BASE_URLS=https://xxx \
-   shibing624/chatpilot
-```
-
 ### 命令行模式（CLI）
 
 支持命令行对话。

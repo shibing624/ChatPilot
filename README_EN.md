@@ -77,8 +77,7 @@ cd web
 npm install
 npm run build
 ```
-输出：项目`web`目录产出`build`文件夹，包含了前端编译输出文件。
-
+Output: The project `web` directory outputs the `build` folder, which contains the front-end compilation output files.
 #### 2. Start the backend service
 
 ```shell
@@ -87,17 +86,6 @@ pip install -r requirements.txt -U
 bash start.sh
 ```
 Ok, now your application is running: http://0.0.0.0:8080 Enjoy! 😄
-
-### Docker deployment
-```shell
-docker pull shibing624/chatpilot
-
-docker run -d -p 8080:8080 \
-   -e MODEL_TYPE=openai \
-   -e OPENAI_API_KEYS=sk-xxxx \
-   -e OPENAI_API_BASE_URLS=https://xxx \
-   shibing624/chatpilot
-```
 
 ### CLI
 
@@ -131,7 +119,7 @@ pip install chatpilot -U
 chatpilot
 ```
 
-> User: 输入问题, 如："一句话介绍北京"。
+> User: Input question，e.g: "introduce beijing"
 
 ## Contact
 
