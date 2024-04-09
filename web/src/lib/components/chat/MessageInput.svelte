@@ -665,7 +665,7 @@
 								? chatInputPlaceholder
 								: isRecording
 								? 'Listening...'
-								: 'Ask me anything(Shift + Enter: change line; /: command)'}
+								: 'Ask me anything (Shift + Enter : change line; / : command)'}
 							bind:value={prompt}
 							on:keypress={(e) => {
 								if (e.keyCode == 13 && !e.shiftKey) {

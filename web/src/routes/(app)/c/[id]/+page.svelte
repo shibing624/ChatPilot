@@ -391,7 +391,7 @@
 
 					for (const line of lines) {
 						if (line !== '') {
-							console.log(line);
+							// console.log(line);
 							let data = JSON.parse(line);
 
 							if ('detail' in data) {
@@ -399,7 +399,7 @@
 							}
 
 							if ('id' in data) {
-								console.log(data);
+								// console.log(data);
 								currentRequestId = data.id;
 							} else {
 								if (data.done == false) {
@@ -466,9 +466,8 @@
 					break;
 				}
 
-				if (autoScroll) {
-					scrollToBottom();
-				}
+				scrollToBottom();
+
 			}
 
 			if ($chatId == _chatId) {
@@ -505,9 +504,8 @@
 		stopResponseFlag = false;
 		await tick();
 
-		if (autoScroll) {
-			scrollToBottom();
-		}
+		scrollToBottom();
+
 
 		if (messages.length == 2 && messages.at(1).content !== '') {
 			window.history.replaceState(history.state, '', `/c/${_chatId}`);
@@ -517,6 +515,7 @@
 
 	const sendPromptOpenAI = async (model, userPrompt, responseMessageId, _chatId) => {
 		const responseMessage = history.messages[responseMessageId];
+		// Scroll down
 		scrollToBottom();
 
 		const docs = messages
@@ -601,13 +600,13 @@
 
 					for (const line of lines) {
 						if (line !== '') {
-							console.log(line);
+							// console.log(line);
 							if (line === 'data: [DONE]') {
 								responseMessage.done = true;
 								messages = messages;
 							} else {
 								let data = JSON.parse(line.replace(/^data: /, ''));
-								console.log(data);
+								// console.log(data);
 
 								if (responseMessage.content == '' && data.choices[0].delta.content == '\n') {
 									continue;
@@ -638,9 +637,8 @@
 					document.getElementById(`speak-button-${responseMessage.id}`)?.click();
 				}
 
-				if (autoScroll) {
-					scrollToBottom();
-				}
+				scrollToBottom();
+
 			}
 
 			if ($chatId == _chatId) {
@@ -682,9 +680,8 @@
 		stopResponseFlag = false;
 		await tick();
 
-		if (autoScroll) {
-			scrollToBottom();
-		}
+		scrollToBottom();
+
 
 		if (messages.length == 2) {
 			window.history.replaceState(history.state, '', `/c/${_chatId}`);
