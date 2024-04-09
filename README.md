@@ -59,7 +59,7 @@ pip install -e .
 #### 1. 构建前端web
 
 两种方法构建前端：
-1. 下载打包并编译好的前端 [buid.zip](https://github.com/shibing624/ChatPilot/releases/download/v0.0.2/build.zip) 解压到项目web目录下。
+1. 下载打包并编译好的前端 [buid.zip](https://github.com/shibing624/ChatPilot/releases/download/0.1.2/build.zip) 解压到项目web目录下。
 2. 自己使用npm构建前端
 
 Requirements:

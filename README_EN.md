@@ -57,7 +57,7 @@ pip install -e .
 #### 1. Build front-end web
 
 Two ways to build the front end:
-1. Download the packaged and compiled front-end [buid.zip](https://github.com/shibing624/ChatPilot/releases/download/v0.0.2/build.zip) and extract it to the project web directory.
+1. Download the packaged and compiled front-end [buid.zip](https://github.com/shibing624/ChatPilot/releases/download/0.1.2/build.zip) and extract it to the project web directory.
 2. Build the front end yourself using npm:
 
 Requirements:
