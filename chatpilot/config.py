@@ -205,12 +205,8 @@ All python packages including requests, matplotlib, scipy, numpy, pandas, \
 etc are available. Create and display chart using `plt.show()`."""
 
 ENABLE_SEARCH_TOOL = os.environ.get("ENABLE_SEARCH_TOOL", "True").lower() == "true"
-SEARCH_TOOL_DESC = """仅当用户的问题涉及以下情况，请执行Google搜索：\
-1.最新新闻事件或最近发生的事情；\
-2.特定日期或时间点之后的信息更新，如“最新的奥斯卡获奖名单”；\
-3.实时数据或统计，如股票市场、体育比赛结果、天气预报；\
-4.特定个人的近期动态或社交媒体更新； \
-5.高度专业化或地域性的问题，如特定产品的用户评价、某地的餐馆推荐。"""
+SEARCH_TOOL_DESC = """A Google Search API. Useful for when you need to ask with search. \
+Input should be a search query."""
 
 ENABLE_URL_CRAWLER_TOOL = os.environ.get("ENABLE_URL_CRAWLER_TOOL", "True").lower() == "true"
 URL_CRAWLER_TOOL_DESC = """当用户问题包含以http开头的URL链接时，可用WebUrlCrawler工具"""
@@ -235,7 +231,7 @@ REACT_RPOMPT = """
 
 {tools}
 
-使用工具时，按下面格式输出:
+当你使用工具时，按下面格式输出:
 
 Question: the input question you must answer
 Thought: you should always think about what to do
