@@ -187,7 +187,7 @@ CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", 100))
 RAG_TOP_K = int(os.environ.get("RAG_TOP_K", 5))
 DOC_TEXT_LENGTH_LIMIT = int(os.environ.get("DOC_TEXT_LENGTH_LIMIT", -1))
 
-RAG_TEMPLATE = """根据上下文(context)回答问题：
+RAG_TEMPLATE = """根据以下文档资料（context）回答问题，不要使用外部工具。
 <context>
     [context]
 </context>

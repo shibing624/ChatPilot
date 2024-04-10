@@ -331,8 +331,6 @@ def proxy_other_request(api_key, base_url, path, body, method):
             # OpenAI API (Feb 2024)
             del body["num_ctx"]
 
-        if "docs" in body:
-            del body["docs"]
         # Convert the modified body back to JSON
         body = json.dumps(body)
     except json.JSONDecodeError as e:
@@ -393,12 +391,9 @@ async def proxy(
         temperature = body_dict.get("temperature", 0.7)
         num_ctx = body_dict.get('num_ctx', 1024)
         messages = body_dict.get("messages", [])
-        docs = body_dict.get("docs", [])
-        enable_tool = False if docs else None
         logger.debug(
             f"model_name: {model_name}, max_tokens: {max_tokens}, "
-            f"num_ctx: {num_ctx}, messages size: {len(messages)}, "
-            f"enable_tool: {enable_tool}"
+            f"num_ctx: {num_ctx}, messages size: {len(messages)}"
         )
         system_prompt = ""
         history = []
@@ -423,9 +418,6 @@ async def proxy(
             model_name=model_name,
             model_api_key=api_key,
             model_api_base=base_url,
-            enable_search_tool=enable_tool,
-            enable_run_python_code_tool=enable_tool,
-            enable_url_crawler_tool=enable_tool,
             search_name="serper" if SERPER_API_KEY else "duckduckgo",
             verbose=True,
             temperature=temperature,

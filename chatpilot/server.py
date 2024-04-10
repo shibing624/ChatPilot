@@ -99,6 +99,7 @@ class RAGMiddleware(BaseHTTPMiddleware):
                     rag_app.state.TOP_K,
                     rag_app.state.sentence_transformer_ef,
                 )
+                del data["docs"]
             logger.debug(f"data: {data}")
 
             modified_body_bytes = json.dumps(data).encode("utf-8")
