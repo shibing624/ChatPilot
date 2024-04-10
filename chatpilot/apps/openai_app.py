@@ -394,11 +394,11 @@ async def proxy(
         num_ctx = body_dict.get('num_ctx', 1024)
         messages = body_dict.get("messages", [])
         docs = body_dict.get("docs", [])
-        enable_search_tool = False if docs else None
+        enable_tool = False if docs else None
         logger.debug(
             f"model_name: {model_name}, max_tokens: {max_tokens}, "
             f"num_ctx: {num_ctx}, messages size: {len(messages)}, "
-            f"enable_search_tool: {enable_search_tool}"
+            f"enable_tool: {enable_tool}"
         )
         system_prompt = ""
         history = []
@@ -423,7 +423,9 @@ async def proxy(
             model_name=model_name,
             model_api_key=api_key,
             model_api_base=base_url,
-            enable_search_tool=enable_search_tool,
+            enable_search_tool=enable_tool,
+            enable_run_python_code_tool=enable_tool,
+            enable_url_crawler_tool=enable_tool,
             search_name="serper" if SERPER_API_KEY else "duckduckgo",
             verbose=True,
             temperature=temperature,
@@ -444,9 +446,9 @@ async def proxy(
                 kind = event['event']
                 if kind in ['on_tool_start', 'on_chat_model_stream']:
                     if kind == "on_tool_start":
-                        c = event['data'].get('input', '')
+                        c = str(event['data'].get('input', ''))
                     else:
-                        c = event['data']['chunk'].content
+                        c = str(event['data']['chunk'].content)
 
                     data_structure = {
                         "id": event.get('id', 'default_id'),
