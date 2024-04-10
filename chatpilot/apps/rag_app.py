@@ -66,6 +66,7 @@ from chatpilot.config import (
     RAG_TOP_K,
     OPENAI_API_KEYS,
     OPENAI_API_BASE_URLS,
+    DOC_TEXT_LENGTH_LIMIT,
 )
 from chatpilot.constants import ERROR_MESSAGES
 
@@ -155,7 +156,8 @@ class StoreWebForm(CollectionNameForm):
 
 def store_data_in_vector_db(data, collection_name, overwrite: bool = False) -> bool:
     text_splitter = ChineseRecursiveTextSplitter(
-        chunk_size=app.state.CHUNK_SIZE, chunk_overlap=app.state.CHUNK_OVERLAP
+        chunk_size=app.state.CHUNK_SIZE, chunk_overlap=app.state.CHUNK_OVERLAP,
+        doc_text_length_limit=DOC_TEXT_LENGTH_LIMIT
     )
     docs = text_splitter.split_documents(data)
 
@@ -367,7 +369,10 @@ def store_web(form_data: StoreWebForm, user=Depends(get_current_user)):
     try:
         # input is url, e.g. "https://www.gutenberg.org/files/1727/1727-h/1727-h.htm"
         loader = WebBaseLoader(form_data.url)
-        data = loader.load()
+        try:
+            data = loader.lazy_load()
+        except NotImplementedError:
+            data = loader.load()
 
         collection_name = form_data.collection_name
         if collection_name == "":
@@ -493,7 +498,12 @@ def store_doc(
         f.close()
 
         loader, known_type = get_loader(file.filename, file.content_type, file_path)
-        data = loader.load()
+        # Check if lazy_load is implemented
+        try:
+            data = loader.lazy_load()
+        except NotImplementedError:
+            data = loader.load()
+
         result = store_data_in_vector_db(data, collection_name)
 
         if result:
@@ -539,7 +549,10 @@ def scan_docs_dir(user=Depends(get_admin_user)):
                 loader, known_type = get_loader(
                     filename, file_content_type[0], str(path)
                 )
-                data = loader.load()
+                try:
+                    data = loader.lazy_load()
+                except NotImplementedError:
+                    data = loader.load()
 
                 result = store_data_in_vector_db(data, collection_name)
 

@@ -185,6 +185,7 @@ except Exception as e:
 CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 1000))
 CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", 100))
 RAG_TOP_K = int(os.environ.get("RAG_TOP_K", 5))
+DOC_TEXT_LENGTH_LIMIT = int(os.environ.get("DOC_TEXT_LENGTH_LIMIT", -1))
 
 RAG_TEMPLATE = """根据上下文(context)回答问题：
 <context>
@@ -195,7 +196,7 @@ RAG_TEMPLATE = """根据上下文(context)回答问题：
 """
 
 ENABLE_RUN_PYTHON_CODE_TOOL = os.environ.get("ENABLE_RUN_PYTHON_CODE_TOOL", "True").lower() == "true"
-RUN_PYTHON_CODE_TOOL_DESC = """code interpreter, 在沙箱中运行 Python 代码时有用。ALWAYS PRINT VARIABLES TO SHOW THE VALUE. \
+RUN_PYTHON_CODE_TOOL_DESC = """Python Code Interpreter Tool. ALWAYS PRINT VARIABLES TO SHOW THE VALUE. \
 The environment is long running and exists across multiple executions. \
 You must send the whole script every time and print your outputs. \
 Script should be pure python code that can be evaluated. \
@@ -205,8 +206,7 @@ All python packages including requests, matplotlib, scipy, numpy, pandas, \
 etc are available. Create and display chart using `plt.show()`."""
 
 ENABLE_SEARCH_TOOL = os.environ.get("ENABLE_SEARCH_TOOL", "True").lower() == "true"
-SEARCH_TOOL_DESC = """A Google Search API. Useful for when you need to ask with search. \
-Input should be a search query."""
+SEARCH_TOOL_DESC = """A Google Search API. Useful for when you need to ask with search. Input should be a search query."""
 
 ENABLE_URL_CRAWLER_TOOL = os.environ.get("ENABLE_URL_CRAWLER_TOOL", "True").lower() == "true"
 URL_CRAWLER_TOOL_DESC = """当用户问题包含以http开头的URL链接时，可用WebUrlCrawler工具"""

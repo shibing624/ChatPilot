@@ -4,9 +4,10 @@
 @description: 
 """
 import re
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Iterable
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_core.documents import Document
 from loguru import logger
 
 from chatpilot.config import CHROMA_CLIENT
@@ -22,6 +23,7 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
             separators: Optional[List[str]] = None,
             keep_separator: bool = True,
             is_separator_regex: bool = True,
+            doc_text_length_limit: int = -1,
             **kwargs: Any,
     ) -> None:
         """Create a new TextSplitter."""
@@ -35,6 +37,7 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
             "，|,\s"
         ]
         self._is_separator_regex = is_separator_regex
+        self.doc_text_length_limit = doc_text_length_limit
 
     @staticmethod
     def _split_text_with_regex_from_end(
@@ -93,6 +96,27 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
             merged_text = self._merge_splits(_good_splits, _separator)
             final_chunks.extend(merged_text)
         return [re.sub(r"\n{2,}", "\n", chunk.strip()) for chunk in final_chunks if chunk.strip() != ""]
+
+    def split_documents(self, documents: Iterable[Document]) -> List[Document]:
+        """Split documents."""
+        texts, metadatas = [], []
+        count = 0
+        if self.doc_text_length_limit > 0:
+            max_length = self.doc_text_length_limit
+        else:
+            max_length = None
+
+        for doc in documents:
+            content = doc.page_content
+            if max_length and count >= max_length:
+                logger.warning(f"Text length limit reached: {count}")
+                break
+            if max_length and len(content) > max_length:
+                content = content[:max_length]
+            texts.append(content)
+            metadatas.append(doc.metadata)
+            count += len(content)
+        return self.create_documents(texts, metadatas=metadatas)
 
 
 def query_doc(collection_name: str, query: str, k: int, embedding_function):
@@ -186,6 +210,7 @@ def get_rag_prompt(template: str, context: str, query: str):
     template = template.replace("[query]", query, 1)
 
     return template
+
 
 def rag_messages(docs, messages, template, k, embedding_function):
     logger.debug(f"docs: {docs}")

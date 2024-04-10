@@ -41,8 +41,7 @@ class RagFusion:
             raise ValueError("Please set OPENAI_API_KEYS in environment variable.")
         self.requery_prompt = ChatPromptTemplate.from_messages([
             ("system", "你是一个有用的助手，可以根据单个输入查询生成多个搜索查询。"),
-            ("user", "生成多个与此相关的搜索查询: {original_query}"),
-            ("user", "OUTPUT (4 queries):")
+            ("user", "生成多个与此相关的搜索查询: {original_query}\n\nOUTPUT (4 queries):"),
         ])
         # Using LLM generate more queries
         self.requery_model = ChatOpenAI(
