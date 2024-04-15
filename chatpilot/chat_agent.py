@@ -259,7 +259,6 @@ class ChatAgent:
                     MessagesPlaceholder(variable_name="agent_scratchpad"),
                 ]
             )
-            llm_with_stop = self.llm.bind(stop=["\nObservation"])
             agent = (
                     {
                         "input": lambda x: x["input"],
@@ -268,7 +267,7 @@ class ChatAgent:
                             "chat_history"] else [],
                     }
                     | prompt
-                    | llm_with_stop
+                    | self.llm.bind(stop=["\nObservation"])
                     | ReActParserAndNoTool()
             )
         else:

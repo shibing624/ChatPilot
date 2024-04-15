@@ -189,7 +189,7 @@ DOC_TEXT_LENGTH_LIMIT = int(os.environ.get("DOC_TEXT_LENGTH_LIMIT", -1))
 
 RAG_TEMPLATE = """根据以下文档资料（context）回答问题，不要使用外部工具。
 <context>
-    [context]
+[context]
 </context>
 
 问题: [query]

@@ -3,13 +3,12 @@
 @author:XuMing(xuming624@qq.com)
 @description: 
 """
-from langchain.agents.output_parsers import ReActSingleInputOutputParser
 import re
 from typing import Union
 
+from langchain.agents.output_parsers import ReActSingleInputOutputParser
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.exceptions import OutputParserException
-
 
 FINAL_ANSWER_ACTION = "Final Answer:"
 THOUGHT_ACTION = "Thought:"
@@ -51,7 +50,6 @@ class ReActParserAndNoTool(ReActSingleInputOutputParser):
 
     """
 
-
     def parse(self, text: str) -> Union[AgentAction, AgentFinish]:
         includes_answer = FINAL_ANSWER_ACTION in text
         regex = (
@@ -86,7 +84,7 @@ class ReActParserAndNoTool(ReActSingleInputOutputParser):
                 {"output": text.split(OBS_ACTION)[-1].strip()}, text
             )
         elif not re.search(
-            r"[\s]*Action\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)", text, re.DOTALL
+                r"[\s]*Action\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)", text, re.DOTALL
         ):
             raise OutputParserException(
                 f"`{text}`",
@@ -96,4 +94,3 @@ class ReActParserAndNoTool(ReActSingleInputOutputParser):
             )
         else:
             raise OutputParserException(f"Could not parse LLM output: `{text}`")
-
