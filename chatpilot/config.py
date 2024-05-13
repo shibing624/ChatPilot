@@ -271,7 +271,7 @@ DEFAULT_PROMPT_SUGGESTIONS = (
         },
         {
             "title": ["北京今日天气", "执行搜索"],
-            "content": "北京今日天气",
+            "content": "搜索一下北京今日天气",
         },
         {
             "title": ["Show me a code snippet", "of a website's sticky header"],
