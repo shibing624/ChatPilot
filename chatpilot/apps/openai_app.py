@@ -440,25 +440,29 @@ async def proxy(
                     if kind == "on_tool_start":
                         c = str(event['data'].get('input', ''))
                     else:
-                        c = str(event['data']['chunk'].content)
-
-                    data_structure = {
-                        "id": event.get('id', 'default_id'),
-                        "object": "chat.completion.chunk",
-                        "created": event.get('created', created),
-                        "model": model_name,
-                        "system_fingerprint": event.get('system_fingerprint', ''),
-                        "choices": [
-                            {
-                                "index": 0,
-                                "delta": {"content": c},
-                                "logprobs": None,
-                                "finish_reason": None
-                            }
-                        ]
-                    }
-                    formatted_data = f"data: {json.dumps(data_structure)}\n\n"
-                    yield formatted_data.encode()
+                        c = event['data']['chunk'].content
+                        if not c:
+                            tool_call_chunks = event['data'].get("tool_call_chunks", [])
+                            if tool_call_chunks:
+                                c = tool_call_chunks[0].get("args", "")
+                    if c:
+                        data_structure = {
+                            "id": event.get('id', 'default_id'),
+                            "object": "chat.completion.chunk",
+                            "created": event.get('created', created),
+                            "model": model_name,
+                            "system_fingerprint": event.get('system_fingerprint', ''),
+                            "choices": [
+                                {
+                                    "index": 0,
+                                    "delta": {"content": c},
+                                    "logprobs": None,
+                                    "finish_reason": None
+                                }
+                            ]
+                        }
+                        formatted_data = f"data: {json.dumps(data_structure)}\n\n"
+                        yield formatted_data.encode()
 
             formatted_data_done = f"data: [DONE]\n\n"
             yield formatted_data_done.encode()

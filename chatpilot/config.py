@@ -143,10 +143,13 @@ MODEL_TOKEN_LIMIT = {
     "gpt-3.5-turbo-instruct": 4096,
     "gpt-3.5-turbo-16k": 16384,
     "gpt-3.5-turbo-1106": 16384,
+    "gpt-3.5-turbo-16k-0613": 16384,
     "gpt-4": 8192,
     "gpt-4-32k": 32768,
+    "gpt-4-turbo": 128000,
     "gpt-4-1106-preview": 128000,
     "gpt-4-turbo-preview": 128000,
+    "gpt-4-turbo-2024-04-09": 128000,
     "gpt-4-vision-preview": 128000,
 }
 
@@ -278,7 +281,7 @@ DEFAULT_PROMPT_SUGGESTIONS = (
     ]
 )
 
-DEFAULT_USER_ROLE = os.getenv("DEFAULT_USER_ROLE", "pending")
+DEFAULT_USER_ROLE = os.getenv("DEFAULT_USER_ROLE", "user")
 USER_PERMISSIONS = {"chat": {"deletion": True}}
 
 MODEL_FILTER_ENABLED = os.environ.get("MODEL_FILTER_ENABLED", False)
