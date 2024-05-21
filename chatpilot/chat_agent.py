@@ -66,7 +66,7 @@ class ChatAgent:
         :param model_api_key: The API keys for the OpenAI API.
         :param model_api_base: The base URLs for the OpenAI API.
         :param search_name: The name of the search engine to use, such as "serper" or "duckduckgo".
-        :param agent_type: The type of the agent, such as "react" or openai "function_call".
+        :param agent_type: The type of the agent, such as "react" or "tools".
         :param enable_search_tool: If True, enables the search tool.
         :param enable_url_crawler_tool: If True, enables the web URL crawler tool.
         :param enable_run_python_code_tool: If True, enables the run Python code tool.
@@ -111,6 +111,7 @@ class ChatAgent:
                 **kwargs
             )
         elif model_type == 'openai':
+            # 兼容openai，moonshot(kimi), deepseek api
             self.llm = ChatOpenAI(
                 model=model_name,
                 temperature=temperature,
@@ -167,6 +168,10 @@ class ChatAgent:
         else:
             self.agent_executor = self._initialize_chat_chain()
         logger.debug(f"ChatAgent initialized with model: {model_name}")
+
+    def __repr__(self):
+        return f"ChatAgent(llm={self.llm}, agent_type={self.agent_type}, " \
+               f"tools={self.tools}, agent_executor={self.agent_executor})"
 
     def _initialize_search_engine(self):
         """

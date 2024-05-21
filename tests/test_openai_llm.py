@@ -9,20 +9,24 @@ import unittest
 
 sys.path.append('..')
 from chatpilot import ChatAgent
+from chatpilot.config import OPENAI_API_KEY, OPENAI_API_BASE
 
 
-class EmbeddingsTestCase(unittest.TestCase):
+class BaseTestCase(unittest.TestCase):
 
-    def test_oov_emb(self):
-        """测试 OOV word embedding"""
+    def test_case1(self):
+        """测试"""
         w = '，'
         comma_res = [0.0]
         print(w, comma_res)
         self.assertEqual(comma_res[0], 0.0)
 
     def test_tool_usage(self):
-        m = ChatAgent(max_iterations=1,
+        m = ChatAgent(model_api_base=OPENAI_API_BASE,
+                      model_api_key=OPENAI_API_KEY,
+                      max_iterations=1,
                       max_execution_time=30, )
+        print(m)
         print(m.llm)
         i = "hi?"
         print(i)

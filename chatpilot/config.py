@@ -147,14 +147,28 @@ MODEL_TOKEN_LIMIT = {
     "gpt-4": 8192,
     "gpt-4-32k": 32768,
     "gpt-4-turbo": 128000,
+    "gpt-4o": 128000,
     "gpt-4-1106-preview": 128000,
     "gpt-4-turbo-preview": 128000,
     "gpt-4-turbo-2024-04-09": 128000,
     "gpt-4-vision-preview": 128000,
+    "moonshot-v1-8k": 8000,
+    "moonshot-v1-32k": 32000,
+    "moonshot-v1-128k": 128000,
+    "deepseek-chat": 32768,
+    "deepseek-coder": 16384,
 }
 
 # Dashscope Tongyi Qwen model
 DASHSCOPE_API_KEY = os.environ.get("DASHSCOPE_API_KEY", "")
+
+# Deepseek api
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+DEEPSEEK_API_BASE = os.environ.get("DEEPSEEK_API_BASE", "https://api.deepseek.com/v1")
+
+# Moonshot api(kimi)
+MOONSHOT_API_KEY = os.environ.get("MOONSHOT_API_KEY", "")
+MOONSHOT_API_BASE = os.environ.get("MOONSHOT_API_BASE", "https://api.moonshot.cn/v1")
 
 RPD = int(os.environ.get("RPD", -1))  # RPD(Request Pre Day)
 RPM = int(os.environ.get("RPM", -1))  # RPM(Request Per Minute)
