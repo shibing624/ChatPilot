@@ -319,7 +319,7 @@ def proxy_other_request(api_key, base_url, path, body, method):
 
         # Check if the model is "gpt-4-vision-preview" and set "max_tokens" to 4000
         # This is a workaround until OpenAI fixes the issue with this model
-        if body.get("model") in ["gpt-4-vision-preview", "gpt-4o"]:
+        if body.get("model") in ["gpt-4-vision-preview"]:
             if "max_tokens" not in body:
                 body["max_tokens"] = 4000
 
