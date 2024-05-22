@@ -428,6 +428,7 @@ async def proxy(
             system_prompt=system_prompt,
             agent_type=AGENT_TYPE,
         )
+        logger.debug(chat_agent)
         events = await chat_agent.astream_run(user_question, chat_history=history)
         created = int(time.time())
 
