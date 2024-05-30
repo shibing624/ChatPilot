@@ -20,4 +20,4 @@ if test "$WEBUI_SECRET_KEY $WEBUI_JWT_SECRET_KEY" = " "; then
 fi
 
 export WEBUI_SECRET_KEY="$WEBUI_SECRET_KEY"
-uvicorn chatpilot.server:app --host 0.0.0.0 --port "$PORT" --forwarded-allow-ips '*'
+gunicorn -k uvicorn.workers.UvicornWorker chatpilot.server:app --bind 0.0.0.0:$PORT --forwarded-allow-ips '*' -w 2
