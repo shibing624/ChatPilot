@@ -122,7 +122,7 @@ if "text-embedding" in app.state.RAG_EMBEDDING_MODEL and app.state.OPENAI_API_KE
         api_base=app.state.OPENAI_API_BASE_URLS[0],
         model_name=app.state.RAG_EMBEDDING_MODEL,
     )
-elif "word2vec" in app.state.RAG_EMBEDDING_MODEL:
+elif "text2vec" in app.state.RAG_EMBEDDING_MODEL:
     app.state.sentence_transformer_ef = embedding_functions.Text2VecEmbeddingFunction(
         model_name=app.state.RAG_EMBEDDING_MODEL
     )
