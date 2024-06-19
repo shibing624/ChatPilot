@@ -23,7 +23,7 @@ from chatpilot.apps.auth_utils import get_admin_user
 from chatpilot.apps.image_app import app as images_app
 from chatpilot.apps.litellm_app import app as litellm_app
 from chatpilot.apps.litellm_app import startup as litellm_app_startup
-# from chatpilot.apps.ollama.main import app as ollama_app
+from chatpilot.apps.ollama_app import app as ollama_app
 # from chatpilot.apps.dashscope_app import app as dashscope_app
 from chatpilot.apps.openai_app import app as openai_app
 from chatpilot.apps.rag_app import app as rag_app
@@ -153,7 +153,7 @@ async def on_startup():
 app.mount("/api/v1", webui_app)
 app.mount("/litellm/api", litellm_app)
 # app.mount("/dashscope/api", dashscope_app)
-# app.mount("/ollama", ollama_app)
+app.mount("/ollama", ollama_app)
 app.mount("/openai/api", openai_app)
 app.mount("/images/api/v1", images_app)
 app.mount("/audio/api/v1", audio_app)
@@ -192,8 +192,8 @@ async def get_model_filter_config(
     app.state.MODEL_FILTER_ENABLED = form_data.enabled
     app.state.MODEL_FILTER_LIST = form_data.models
 
-    # ollama_app.state.MODEL_FILTER_ENABLED = app.state.MODEL_FILTER_ENABLED
-    # ollama_app.state.MODEL_FILTER_LIST = app.state.MODEL_FILTER_LIST
+    ollama_app.state.MODEL_FILTER_ENABLED = app.state.MODEL_FILTER_ENABLED
+    ollama_app.state.MODEL_FILTER_LIST = app.state.MODEL_FILTER_LIST
 
     openai_app.state.MODEL_FILTER_ENABLED = app.state.MODEL_FILTER_ENABLED
     openai_app.state.MODEL_FILTER_LIST = app.state.MODEL_FILTER_LIST

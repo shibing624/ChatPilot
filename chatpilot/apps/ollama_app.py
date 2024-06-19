@@ -40,11 +40,6 @@ app.state.MODELS = {}
 REQUEST_POOL = []
 
 
-# TODO: Implement a more intelligent load balancing mechanism for distributing requests among multiple backend instances.
-# Current implementation uses a simple round-robin approach (random.choice). Consider incorporating algorithms like weighted round-robin,
-# least connections, or least response time for better resource utilization and performance optimization.
-
-
 @app.middleware("http")
 async def check_url(request: Request, call_next):
     if len(app.state.MODELS) == 0:
@@ -108,21 +103,16 @@ def merge_models_lists(model_lists):
     return list(merged_models.values())
 
 
-# user=Depends(get_current_user)
-
-
 async def get_all_models():
     tasks = [fetch_url(f"{url}/api/tags") for url in app.state.OLLAMA_BASE_URLS]
     responses = await asyncio.gather(*tasks)
     responses = list(filter(lambda x: x is not None, responses))
-
     models = {
         "models": merge_models_lists(
             map(lambda response: response["models"], responses)
         )
     }
     app.state.MODELS = {model["model"]: model for model in models["models"]}
-    logger.debug(f"get all ollama models, size: {len(app.state.MODELS['models'])}")
     return models
 
 
@@ -721,7 +711,8 @@ async def generate_chat_completion(
     logger.debug(url)
 
     r = None
-    logger.debug(form_data.model_dump_json(exclude_none=True).encode())
+
+    # logger.debug(form_data.model_dump_json(exclude_none=True).encode())
 
     def get_request():
         nonlocal form_data
