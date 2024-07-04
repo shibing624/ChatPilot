@@ -61,18 +61,12 @@ pip install -e .
 两种方法构建前端：
 1. 下载打包并编译好的前端 [buid.zip](https://github.com/shibing624/ChatPilot/releases/download/0.1.2/build.zip) 解压到项目web目录下。
 2. 自己使用npm构建前端：
-
-  Requirements:
-  
   - 🐰 [Node.js](https://nodejs.org/en) >= 20.10
   - 🐍 [Python](https://python.org) >= 3.10
   
   ```sh
   git clone https://github.com/shibing624/ChatPilot.git
   cd ChatPilot/
-  
-  # Copying required .env file
-  cp .env.example .env
   
   # Building Frontend Using Node
   cd web
@@ -86,6 +80,10 @@ pip install -e .
 ```shell
 cd ..
 pip install -r requirements.txt -U
+
+# Copying required .env file
+cp .env.example .env
+
 bash start.sh
 ```
 好了，现在你的应用正在运行：http://0.0.0.0:8080 Enjoy! 😄
