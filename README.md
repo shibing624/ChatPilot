@@ -61,14 +61,11 @@ pip install -e .
 两种方法构建前端：
 1. 下载打包并编译好的前端 [buid.zip](https://github.com/shibing624/ChatPilot/releases/download/0.1.2/build.zip) 解压到项目web目录下。
 2. 自己使用npm构建前端：
-  - 🐰 [Node.js](https://nodejs.org/en) >= 20.10
-  - 🐍 [Python](https://python.org) >= 3.10
-  
   ```sh
   git clone https://github.com/shibing624/ChatPilot.git
   cd ChatPilot/
   
-  # Building Frontend Using Node
+  # Building Frontend Using Node.js >= 20.10
   cd web
   npm install
   npm run build
