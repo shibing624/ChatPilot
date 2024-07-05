@@ -30,6 +30,7 @@ from chatpilot.config import (
     OPENAI_API_BASE_URLS,
     OPENAI_API_KEYS,
     CACHE_DIR,
+    DEFAULT_MODELS,
     MODEL_FILTER_ENABLED,
     MODEL_FILTER_LIST,
     SERPER_API_KEY,
@@ -385,7 +386,7 @@ async def proxy(
         show_api_key = api_key[:4] + "..." + api_key[-4:]
         logger.debug(f"Using API key: {show_api_key}, base URL: {base_url}")
 
-        model_name = body_dict.get('model', 'gpt-3.5-turbo')
+        model_name = body_dict.get('model', DEFAULT_MODELS[0] if DEFAULT_MODELS else "gpt-3.5-turbo")
         max_tokens = body_dict.get("max_tokens", 1024)
         temperature = body_dict.get("temperature", 0.7)
         num_ctx = body_dict.get('num_ctx', 1024)
