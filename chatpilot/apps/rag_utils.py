@@ -6,11 +6,21 @@
 import re
 from typing import List, Optional, Any, Iterable
 
+import chromadb
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from loguru import logger
 
-from chatpilot.config import CHROMA_CLIENT
+from chatpilot.config import CHROMA_DATA_PATH
+
+try:
+    CHROMA_CLIENT = chromadb.PersistentClient(
+        path=CHROMA_DATA_PATH,
+        settings=chromadb.Settings(allow_reset=True, anonymized_telemetry=False),
+    )
+except Exception as e:
+    CHROMA_CLIENT = None
+    logger.warning(f"ChromaDB client failed to initialize: {e}")
 
 
 class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):

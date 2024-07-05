@@ -16,7 +16,7 @@ from chatpilot.constants import ERROR_MESSAGES
 
 pwd_path = os.path.abspath(os.path.dirname(__file__))
 WEBUI_NAME = "ChatPilot"
-DOTENV_PATH = os.getenv("DOTENV_PATH", os.path.join(pwd_path, "../.env"))
+DOTENV_PATH = os.path.realpath(os.getenv("DOTENV_PATH", os.path.join(pwd_path, "../.env")))
 try:
     from dotenv import load_dotenv  # noqa
 
@@ -189,17 +189,6 @@ E2B_API_KEY = os.environ.get("E2B_API_KEY", None)
 CHROMA_DATA_PATH = f"{DATA_DIR}/vector_db"
 # openai embedding is support, text2vec and sentence-transformers are also available
 RAG_EMBEDDING_MODEL = os.environ.get("RAG_EMBEDDING_MODEL", "text-embedding-ada-002")
-try:
-    import chromadb
-    from chromadb import Settings
-
-    CHROMA_CLIENT = chromadb.PersistentClient(
-        path=CHROMA_DATA_PATH,
-        settings=Settings(allow_reset=True, anonymized_telemetry=False),
-    )
-except Exception as e:
-    CHROMA_CLIENT = None
-    logger.warning(f"ChromaDB client failed to initialize: {e}, ignore it if you don't use RAG.")
 
 CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 1000))
 CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", 100))

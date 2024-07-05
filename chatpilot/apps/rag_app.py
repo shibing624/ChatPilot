@@ -50,7 +50,7 @@ from chatpilot.apps.misc import (
     sanitize_filename,
     extract_folders_after_data_docs,
 )
-from chatpilot.apps.rag_utils import query_doc, query_collection, ChineseRecursiveTextSplitter
+from chatpilot.apps.rag_utils import query_doc, query_collection, ChineseRecursiveTextSplitter, CHROMA_CLIENT
 from chatpilot.apps.web.models.documents import (
     Documents,
     DocumentForm,
@@ -59,7 +59,6 @@ from chatpilot.config import (
     UPLOAD_DIR,
     DOCS_DIR,
     RAG_EMBEDDING_MODEL,
-    CHROMA_CLIENT,
     CHUNK_SIZE,
     CHUNK_OVERLAP,
     RAG_TEMPLATE,
