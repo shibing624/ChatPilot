@@ -239,7 +239,9 @@ async def get_all_models():
     logger.debug(f"model_type: {MODEL_TYPE}, base urls size: {len(app.state.OPENAI_API_BASE_URLS)}, "
                  f"keys size: {len(app.state.OPENAI_API_KEYS)}")
     if MODEL_TYPE == 'azure':
-        models = {"data": [{"id": "gpt-35-turbo", "name": "Gpt-35-Turbo", "urlIdx": 0}]}
+        models = {"data": [
+            {"id": m, "name": m, "urlIdx": i} for i, m in enumerate(DEFAULT_MODELS)
+        ]}
     else:
         if len(app.state.OPENAI_API_KEYS) == 1 and app.state.OPENAI_API_KEYS[0] == "":
             models = {"data": []}
