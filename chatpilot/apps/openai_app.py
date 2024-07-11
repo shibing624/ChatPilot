@@ -480,24 +480,20 @@ async def proxy(
         elif FRAMEWORK == "agentica":
             # Init Agent when first request
             if app.state.AGENT is None:
-                chat_agent = AgenticaAssistant(
-                    model_type=MODEL_TYPE,
-                    model_name=model_name,
-                    verbose=True,
-                )
+                chat_agent = AgenticaAssistant(model_type=MODEL_TYPE, model_name=model_name)
                 app.state.AGENT = chat_agent
                 logger.debug(chat_agent)
             elif app.state.MODEL_NAME != model_name:
-                chat_agent = AgenticaAssistant(
-                    model_type=MODEL_TYPE,
-                    model_name=model_name,
-                    verbose=True,
-                )
+                chat_agent = AgenticaAssistant(model_type=MODEL_TYPE, model_name=model_name)
                 app.state.AGENT = chat_agent
                 app.state.MODEL_NAME = model_name
                 logger.debug(chat_agent)
             else:
-                chat_agent = app.state.AGENT
+                if history:
+                    chat_agent = app.state.AGENT
+                else:
+                    chat_agent = AgenticaAssistant(model_type=MODEL_TYPE, model_name=model_name)
+                    app.state.AGENT = chat_agent
             events = chat_agent.stream_run(user_question)
             created = int(time.time())
 
