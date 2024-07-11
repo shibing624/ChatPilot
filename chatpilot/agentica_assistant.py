@@ -104,13 +104,3 @@ class AgenticaAssistant:
         """
 
         return self.model.run(input_str, stream=True, print_output=False)
-
-
-    async def astream_run(self, input_str: str):
-        """
-        Asynchronously runs the given input string through the Agent and returns the result.
-
-        :param input_str: The input string to process.
-        :return: An asynchronous generator of events.
-        """
-        return self.model.arun(input_str, stream=True, print_output=False)
