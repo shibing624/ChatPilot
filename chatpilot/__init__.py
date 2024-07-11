@@ -3,7 +3,7 @@
 @author:XuMing(xuming624@qq.com)
 @description: 
 """
-from chatpilot.chat_agent import ChatAgent
+from chatpilot.langchain_assistant import LangchainAssistant
 from chatpilot.config import (
     OPENAI_API_KEY,
     OPENAI_API_BASE,

@@ -21,11 +21,11 @@ from langchain_core.messages import AIMessage, HumanMessage
 from loguru import logger
 from pydantic import BaseModel
 
+from chatpilot.agentica_assistant import AgenticaAssistant
 from chatpilot.apps.auth_utils import (
     get_current_user,
     get_admin_user,
 )
-from chatpilot.chat_agent import ChatAgent
 from chatpilot.config import (
     OPENAI_API_BASE_URLS,
     OPENAI_API_KEYS,
@@ -39,8 +39,10 @@ from chatpilot.config import (
     RPM,
     MODEL_TYPE,
     AGENT_TYPE,
+    FRAMEWORK,
 )
 from chatpilot.constants import ERROR_MESSAGES
+from chatpilot.langchain_assistant import LangchainAssistant
 
 app = FastAPI()
 app.add_middleware(
@@ -64,7 +66,12 @@ if app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
 else:
     app.state.CLIENT_MANAGER = None
 
+# Get all models
 app.state.MODELS = {}
+
+# Agent for Assistant
+app.state.AGENT = None
+app.state.MODEL_NAME = None
 
 # User request tracking
 user_request_tracker = defaultdict(lambda: {"daily": [], "minute": []})
@@ -170,9 +177,7 @@ async def speech(
         if file_path.is_file():
             return FileResponse(file_path)
 
-        headers = {}
-        headers["Authorization"] = f"Bearer {api_key}"
-        headers["Content-Type"] = "application/json"
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
         try:
             r = requests.post(
@@ -340,9 +345,7 @@ def proxy_other_request(api_key, base_url, path, body, method):
 
     target_url = f"{base_url}/{path}"
 
-    headers = {}
-    headers["Authorization"] = f"Bearer {api_key}"
-    headers["Content-Type"] = "application/json"
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
     r = requests.request(
         method=method,
@@ -389,6 +392,8 @@ async def proxy(
         logger.debug(f"Using API key: {show_api_key}, base URL: {base_url}")
 
         model_name = body_dict.get('model', DEFAULT_MODELS[0] if DEFAULT_MODELS else "gpt-3.5-turbo")
+        if app.state.MODEL_NAME is None:
+            app.state.MODEL_NAME = model_name
         max_tokens = body_dict.get("max_tokens", 1024)
         temperature = body_dict.get("temperature", 0.7)
         num_ctx = body_dict.get('num_ctx', 1024)
@@ -414,63 +419,115 @@ async def proxy(
         if not isinstance(user_question, str):
             return proxy_other_request(api_key, base_url, path, body, method)
 
-        # Create a new ChatAgent instance for each request
-        chat_agent = ChatAgent(
-            model_type=MODEL_TYPE,
-            model_name=model_name,
-            model_api_key=api_key,
-            model_api_base=base_url,
-            search_name="serper" if SERPER_API_KEY else "duckduckgo",
-            verbose=True,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            max_context_tokens=num_ctx,
-            streaming=True,
-            max_iterations=2,
-            max_execution_time=60,
-            system_prompt=system_prompt,
-            agent_type=AGENT_TYPE,
-        )
-        logger.debug(chat_agent)
-        events = await chat_agent.astream_run(user_question, chat_history=history)
-        created = int(time.time())
+        if FRAMEWORK == "langchain":
+            # Create a new ChatAgent instance for each request
+            chat_agent = LangchainAssistant(
+                model_type=MODEL_TYPE,
+                model_name=model_name,
+                model_api_key=api_key,
+                model_api_base=base_url,
+                search_name="serper" if SERPER_API_KEY else "duckduckgo",
+                verbose=True,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                max_context_tokens=num_ctx,
+                streaming=True,
+                max_iterations=2,
+                max_execution_time=60,
+                system_prompt=system_prompt,
+                agent_type=AGENT_TYPE,
+            )
+            logger.debug(chat_agent)
+            events = await chat_agent.astream_run(user_question, chat_history=history)
+            created = int(time.time())
 
-        async def event_generator():
-            """组装为OpenAI格式流式输出"""
-            async for event in events:
-                kind = event['event']
-                if kind in ['on_tool_start', 'on_chat_model_stream']:
-                    if kind == "on_tool_start":
-                        c = str(event['data'].get('input', ''))
-                    else:
-                        c = event['data']['chunk'].content
-                        if not c:
-                            tool_call_chunks = event['data'].get("tool_call_chunks", [])
-                            if tool_call_chunks:
-                                c = tool_call_chunks[0].get("args", "")
-                    if c:
-                        data_structure = {
-                            "id": event.get('id', 'default_id'),
-                            "object": "chat.completion.chunk",
-                            "created": event.get('created', created),
-                            "model": model_name,
-                            "system_fingerprint": event.get('system_fingerprint', ''),
-                            "choices": [
-                                {
-                                    "index": 0,
-                                    "delta": {"content": c},
-                                    "logprobs": None,
-                                    "finish_reason": None
-                                }
-                            ]
-                        }
-                        formatted_data = f"data: {json.dumps(data_structure)}\n\n"
-                        yield formatted_data.encode()
+            async def event_generator():
+                """组装为OpenAI格式流式输出"""
+                async for event in events:
+                    kind = event['event']
+                    if kind in ['on_tool_start', 'on_chat_model_stream']:
+                        if kind == "on_tool_start":
+                            c = str(event['data'].get('input', ''))
+                        else:
+                            c = event['data']['chunk'].content
+                            if not c:
+                                tool_call_chunks = event['data'].get("tool_call_chunks", [])
+                                if tool_call_chunks:
+                                    c = tool_call_chunks[0].get("args", "")
+                        if c:
+                            data_structure = {
+                                "id": event.get('id', 'default_id'),
+                                "object": "chat.completion.chunk",
+                                "created": event.get('created', created),
+                                "model": model_name,
+                                "system_fingerprint": event.get('system_fingerprint', ''),
+                                "choices": [
+                                    {
+                                        "index": 0,
+                                        "delta": {"content": c},
+                                        "logprobs": None,
+                                        "finish_reason": None
+                                    }
+                                ]
+                            }
+                            formatted_data = f"data: {json.dumps(data_structure)}\n\n"
+                            yield formatted_data.encode()
 
-            formatted_data_done = f"data: [DONE]\n\n"
-            yield formatted_data_done.encode()
+                formatted_data_done = f"data: [DONE]\n\n"
+                yield formatted_data_done.encode()
 
-        return StreamingResponse(event_generator(), media_type='text/event-stream')
+            return StreamingResponse(event_generator(), media_type='text/event-stream')
+        elif FRAMEWORK == "agentica":
+            # Init Agent when first request
+            if app.state.AGENT is None:
+                chat_agent = AgenticaAssistant(
+                    model_type=MODEL_TYPE,
+                    model_name=model_name,
+                    verbose=True,
+                )
+                app.state.AGENT = chat_agent
+                logger.debug(chat_agent)
+            elif app.state.MODEL_NAME != model_name:
+                chat_agent = AgenticaAssistant(
+                    model_type=MODEL_TYPE,
+                    model_name=model_name,
+                    verbose=True,
+                )
+                app.state.AGENT = chat_agent
+                app.state.MODEL_NAME = model_name
+                logger.debug(chat_agent)
+            else:
+                chat_agent = app.state.AGENT
+            events = chat_agent.stream_run(user_question)
+            created = int(time.time())
+
+            def event_generator():
+                """组装为OpenAI格式流式输出"""
+                for event in events:
+                    data_structure = {
+                        "id": 'default_id',
+                        "object": "chat.completion.chunk",
+                        "created": created,
+                        "model": model_name,
+                        "system_fingerprint": '',
+                        "choices": [
+                            {
+                                "index": 0,
+                                "delta": {"content": event},
+                                "logprobs": None,
+                                "finish_reason": None
+                            }
+                        ]
+                    }
+                    formatted_data = f"data: {json.dumps(data_structure)}\n\n"
+                    yield formatted_data.encode()
+
+                formatted_data_done = f"data: [DONE]\n\n"
+                yield formatted_data_done.encode()
+
+            return StreamingResponse(event_generator(), media_type='text/event-stream')
+        else:
+            raise ValueError(f"Not support: {FRAMEWORK}")
     except Exception as e:
         logger.error(e)
         error_detail = "Server Connection Error"

@@ -117,6 +117,8 @@ OLLAMA_BASE_URLS = [url.strip() for url in OLLAMA_BASE_URL.split(";")]
 ####################################
 MODEL_TYPE = os.environ.get("MODEL_TYPE", "openai")  # it can be openai / azure
 AGENT_TYPE = os.environ.get("AGENT_TYPE", "react")  # it can be react / function_call
+FRAMEWORK = os.environ.get("FRAMEWORK", "langchain")  # it can be langchain / agentica
+logger.debug(f"MODEL_TYPE: {MODEL_TYPE}, AGENT_TYPE: {AGENT_TYPE}, FRAMEWORK: {FRAMEWORK}")
 
 # api key can be multiple, separated by comma(,)
 OPENAI_API_KEYS = os.environ.get("OPENAI_API_KEYS", os.environ.get("OPENAI_API_KEY"))

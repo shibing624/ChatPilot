@@ -35,7 +35,7 @@ from chatpilot.config import (
 from chatpilot.react_parser import ReActParserAndNoTool
 
 
-class ChatAgent:
+class LangchainAssistant:
     def __init__(
             self,
             model_type: str = "openai",
@@ -59,7 +59,7 @@ class ChatAgent:
             **kwargs
     ):
         """
-        Initializes the ChatAgent with the given parameters.
+        Initializes the LangchainAssistant with the given parameters.
 
         :param model_type: The type of the model, such as "openai" / "azure" / "dashscope".
         :param model_name: The model name of OpenAI.
@@ -78,7 +78,7 @@ class ChatAgent:
         :param max_tokens: The maximum number of tokens for the OpenAI model to generate.
         :param max_context_tokens: The maximum number of context tokens to use, prompt max tokens.
         :param streaming: If True, enables streaming mode.
-        :param system_prompt: The system prompt to use for the ChatAgent.
+        :param system_prompt: The system prompt to use for the LangchainAssistant.
         :param kwargs: Additional keyword arguments.
         """
         # Check max tokens
@@ -167,10 +167,10 @@ class ChatAgent:
             self.agent_executor = self._initialize_agent_executor()
         else:
             self.agent_executor = self._initialize_chat_chain()
-        logger.debug(f"ChatAgent initialized with model: {model_name}")
+        logger.debug(f"LangchainAssistant initialized with model: {model_name}")
 
     def __repr__(self):
-        return f"ChatAgent(llm={self.llm}, agent_type={self.agent_type}, " \
+        return f"LangchainAssistant(llm={self.llm}, agent_type={self.agent_type}, " \
                f"tools={self.tools}, agent_executor={self.agent_executor})"
 
     def _initialize_search_engine(self):
@@ -195,7 +195,7 @@ class ChatAgent:
 
     def _initialize_tools(self, enable_search_tool, enable_url_crawler_tool, enable_run_python_code_tool):
         """
-        Initializes the tools used by the ChatAgent.
+        Initializes the tools used by the LangchainAssistant.
 
         :return: A list of Tool instances.
         """
@@ -248,7 +248,7 @@ class ChatAgent:
 
     def _initialize_agent_executor(self):
         """
-        Initializes the AgentExecutor for the ChatAgent.
+        Initializes the AgentExecutor for the LangchainAssistant.
 
         :return: An instance of AgentExecutor.
         """
@@ -307,7 +307,7 @@ class ChatAgent:
             max_iterations=self.max_iterations,
             max_execution_time=self.max_execution_time,
             handle_parsing_errors=True,
-        ).with_config({"run_name": "ChatAgent"})
+        ).with_config({"run_name": "LangchainAssistant"})
 
     def _initialize_chat_chain(self):
         """legacy chat chain."""
@@ -320,7 +320,7 @@ class ChatAgent:
         )
         chain = prompt | self.llm | OpenAIToolsAgentOutputParser()
         # logger.debug(f"Initialized chat chain, prompt: {prompt.pretty_repr()}")
-        return chain.with_config({"run_name": "ChatAgent"})
+        return chain.with_config({"run_name": "LangchainAssistant"})
 
     def count_token_length(self, text):
         """Count token length."""
@@ -351,7 +351,7 @@ class ChatAgent:
 
     def run(self, input_str: str, chat_history: Optional[List] = None):
         """
-        Runs the given input string through the ChatAgent and returns the result.
+        Runs the given input string through the LangchainAssistant and returns the result.
 
         :param input_str: The input string to process.
         :param chat_history: Optional; the current chat history.
@@ -379,7 +379,7 @@ class ChatAgent:
 
     async def astream_run(self, input_str: str, chat_history: Optional[List] = None):
         """
-        Asynchronously runs the given input string through the ChatAgent and returns the result.
+        Asynchronously runs the given input string through the LangchainAssistant and returns the result.
 
         :param input_str: The input string to process.
         :param chat_history: Optional; the current chat history.

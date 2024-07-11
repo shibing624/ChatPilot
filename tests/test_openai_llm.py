@@ -8,7 +8,7 @@ import sys
 import unittest
 
 sys.path.append('..')
-from chatpilot import ChatAgent
+from chatpilot import LangchainAssistant
 from chatpilot.config import OPENAI_API_KEY, OPENAI_API_BASE
 
 
@@ -22,10 +22,10 @@ class BaseTestCase(unittest.TestCase):
         self.assertEqual(comma_res[0], 0.0)
 
     def test_tool_usage(self):
-        m = ChatAgent(model_api_base=OPENAI_API_BASE,
-                      model_api_key=OPENAI_API_KEY,
-                      max_iterations=1,
-                      max_execution_time=30, )
+        m = LangchainAssistant(model_api_base=OPENAI_API_BASE,
+                               model_api_key=OPENAI_API_KEY,
+                               max_iterations=1,
+                               max_execution_time=30, )
         print(m)
         print(m.llm)
         i = "hi?"
