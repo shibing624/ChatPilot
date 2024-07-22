@@ -156,6 +156,7 @@ MODEL_TOKEN_LIMIT = {
     "gpt-4-turbo-2024-04-09": 128000,
     "gpt-4o": 128000,
     "gpt-4o-2024-05-13": 128000,
+    "gpt-4o-mini": 128000,
     "moonshot-v1-8k": 8000,
     "moonshot-v1-32k": 32000,
     "moonshot-v1-128k": 128000,
