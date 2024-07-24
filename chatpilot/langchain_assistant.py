@@ -101,12 +101,11 @@ class LangchainAssistant:
         # Define llm
         if model_type == 'azure':
             self.llm = AzureChatOpenAI(
-                openai_api_version=os.environ.get("OPENAI_API_VERSION"),
+                openai_api_version=os.environ.get("OPENAI_API_VERSION") or os.getenv("AZURE_OPENAI_API_VERSION"),
                 temperature=temperature,
                 max_tokens=max_tokens,
                 timeout=max_execution_time,
                 streaming=streaming,
-                **kwargs
             )
         elif model_type == 'openai':
             # 兼容openai，moonshot(kimi), deepseek api
@@ -355,7 +354,7 @@ class LangchainAssistant:
         :param chat_history: Optional; the current chat history.
         :return: A dictionary containing the output of the agent.
         """
-        chat_history = chat_history if chat_history is not None else self.chat_history
+        chat_history = chat_history if chat_history else self.chat_history
         if chat_history:
             chat_history = (
                 chat_history[-self.num_memory_turns * 2:]
@@ -384,7 +383,7 @@ class LangchainAssistant:
         :return: An asynchronous generator of events.
         """
 
-        chat_history = chat_history if chat_history is not None else self.chat_history
+        chat_history = chat_history if chat_history else self.chat_history
         if chat_history:
             chat_history = (
                 chat_history[-self.num_memory_turns * 2:]

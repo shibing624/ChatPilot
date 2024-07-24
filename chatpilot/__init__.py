@@ -4,6 +4,7 @@
 @description: 
 """
 from chatpilot.langchain_assistant import LangchainAssistant
+from chatpilot.agentica_assistant import AgenticaAssistant
 from chatpilot.config import (
     OPENAI_API_KEY,
     OPENAI_API_BASE,

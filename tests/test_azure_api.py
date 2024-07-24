@@ -7,76 +7,17 @@ import sys
 import unittest
 
 sys.path.append('..')
-from chatpilot import LangchainAssistant
-from chatpilot.config import OPENAI_API_KEY
+from chatpilot import AgenticaAssistant
 
 
 class AZTestCase(unittest.TestCase):
-    def test_tool_usage(self):
-        m = LangchainAssistant(
-            model_type='azure',
-            model_name='gpt-35-turbo',
-            model_api_key=OPENAI_API_KEY,
-            model_api_base='https://westeurope.api.cognitive.microsoft.com/openai/deployments/gpt-35-turbo',
-            max_iterations=1,
-            max_execution_time=10,
-            streaming=False,
-        )
-        print(m.llm)
-        print(m.run('https://python.langchain.com/docs/integrations/tools/search_tools 总结这个文章', []))
-        print(m.run('一句话介绍南京', []))
-        i = "俄乌战争的最新进展?"
-        print(i)
-        r = m.run(i, [])
-        print(r)
-        print("===")
-
-        print(m.run("计算88888*4444.3=?"))
-        print(m.run("我前面问了啥"))
-
     def test_url_crawler(self):
-        m = LangchainAssistant(
+        m = AgenticaAssistant(
             model_type='azure',
-            model_name='gpt-35-turbo',
-            model_api_key=OPENAI_API_KEY,
-            model_api_base='https://westeurope.api.cognitive.microsoft.com/openai/deployments/gpt-35-turbo',
-            max_iterations=3,
-            max_execution_time=60,
-            streaming=False,
+            model_name='gpt-4o',
         )
         print(m.llm)
-        print(m.run('https://python.langchain.com/docs/integrations/tools/search_tools 总结这个文章', []))
-
-    def test_stream(self):
-        m = LangchainAssistant(
-            model_type='azure',
-            model_name='gpt-35-turbo',
-            model_api_key=OPENAI_API_KEY,
-            model_api_base='https://westeurope.api.cognitive.microsoft.com/openai/deployments/gpt-35-turbo',
-            max_iterations=1,
-            max_execution_time=10,
-            streaming=True,
-        )
-        print(m.llm)
-        print(m.run('一句话介绍南京', []))
-
-        import asyncio
-        async def d():
-            questions = [
-                "人体最大的器官是啥",
-                # "人体最大的器官是啥",
-                # "how many letters in the word 'educabe'?",
-                # "它是一个真的单词吗？",
-            ]
-            for i in questions:
-                print(i)
-                events = await m.astream_run(i)
-                async for event in events:
-                    print(event)
-                    print("===")
-                    pass
-
-        asyncio.run(d())
+        print(m.run('https://python.langchain.com/docs/integrations/tools/search_tools 总结这个文章'))
 
 
 if __name__ == '__main__':

@@ -16,7 +16,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from loguru import logger
 
-from chatpilot.config import OPENAI_API_KEYS, OPENAI_API_BASE_URLS, RAG_TEMPLATE
+from chatpilot.config import RAG_TEMPLATE
 
 
 class RagFusion:
@@ -26,8 +26,6 @@ class RagFusion:
             openai_model: str = "gpt-3.5-turbo-1106",
             generate_model: str = "gpt-3.5-turbo-16k",
             temperature: float = 0.0,
-            openai_api_base: str = OPENAI_API_BASE_URLS[0],
-            openai_api_key: str = OPENAI_API_KEYS[0],
     ):
         """
         RagFusion
@@ -37,8 +35,6 @@ class RagFusion:
             4. Generate answer with RAG model
         :param documents:
         """
-        if not openai_api_key:
-            raise ValueError("Please set OPENAI_API_KEYS in environment variable.")
         self.requery_prompt = ChatPromptTemplate.from_messages([
             ("system", "你是一个有用的助手，可以根据单个输入查询生成多个搜索查询。"),
             ("user", "生成多个与此相关的搜索查询: {original_query}\n\nOUTPUT (4 queries):"),
@@ -47,15 +43,10 @@ class RagFusion:
         self.requery_model = ChatOpenAI(
             temperature=temperature,
             model=openai_model,
-            openai_api_key=openai_api_key,
-            openai_api_base=openai_api_base
         )
         vectorstore = Chroma.from_documents(
             documents,
-            OpenAIEmbeddings(
-                openai_api_base=openai_api_base,
-                openai_api_key=openai_api_key
-            )
+            OpenAIEmbeddings()
         )
         self.retriever = vectorstore.as_retriever()
 
@@ -65,8 +56,6 @@ class RagFusion:
         self.generate_model = ChatOpenAI(
             temperature=temperature,
             model=generate_model,
-            openai_api_key=openai_api_key,
-            openai_api_base=openai_api_base
         )
 
     @staticmethod

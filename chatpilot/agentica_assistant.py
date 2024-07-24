@@ -104,3 +104,12 @@ class AgenticaAssistant:
         """
 
         return self.model.run(input_str, stream=True, print_output=False)
+
+    def run(self, input_str: str):
+        """
+        runs the given input string through the ChatAgent and returns the result.
+
+        :param input_str: The input string to process.
+        :return: The result of the processing.
+        """
+        return self.model.run(input_str, stream=False, print_output=False)
