@@ -8,7 +8,7 @@ import sys
 
 sys.path.append('..')
 
-from chatpilot import ChatAgent
+from chatpilot import LangchainAssistant
 
 from dotenv import load_dotenv  # noqa
 
@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     def demo6():
         import asyncio
-        m = ChatAgent(
+        m = LangchainAssistant(
             model_type='azure',
             model_name="gpt-35-turbo",
             model_api_key=os.getenv("OPENAI_API_KEYS"),
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     demo6()
 
     def demo5():
-        m = ChatAgent(
+        m = LangchainAssistant(
             model_type='azure',
             model_name="gpt-35-turbo",
             model_api_key=os.getenv("OPENAI_API_KEYS"),

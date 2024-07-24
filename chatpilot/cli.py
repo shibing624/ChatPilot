@@ -5,7 +5,7 @@
 """
 import argparse
 
-from .chat_agent import ChatAgent
+from .langchain_assistant import LangchainAssistant
 from .config import OPENAI_API_KEY, OPENAI_API_BASE
 
 
@@ -17,7 +17,7 @@ def main():
     parser.add_argument('--openai_api_base', type=str, default=OPENAI_API_BASE, help='openai api base url')
     args = parser.parse_args()
 
-    m = ChatAgent(
+    m = LangchainAssistant(
         model_api_key=args.openai_api_key,
         model_api_base=args.openai_api_base,
         model_type='openai',

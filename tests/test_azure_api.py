@@ -7,13 +7,13 @@ import sys
 import unittest
 
 sys.path.append('..')
-from chatpilot import ChatAgent
+from chatpilot import LangchainAssistant
 from chatpilot.config import OPENAI_API_KEY
 
 
 class AZTestCase(unittest.TestCase):
     def test_tool_usage(self):
-        m = ChatAgent(
+        m = LangchainAssistant(
             model_type='azure',
             model_name='gpt-35-turbo',
             model_api_key=OPENAI_API_KEY,
@@ -35,7 +35,7 @@ class AZTestCase(unittest.TestCase):
         print(m.run("我前面问了啥"))
 
     def test_url_crawler(self):
-        m = ChatAgent(
+        m = LangchainAssistant(
             model_type='azure',
             model_name='gpt-35-turbo',
             model_api_key=OPENAI_API_KEY,
@@ -48,7 +48,7 @@ class AZTestCase(unittest.TestCase):
         print(m.run('https://python.langchain.com/docs/integrations/tools/search_tools 总结这个文章', []))
 
     def test_stream(self):
-        m = ChatAgent(
+        m = LangchainAssistant(
             model_type='azure',
             model_name='gpt-35-turbo',
             model_api_key=OPENAI_API_KEY,

@@ -117,11 +117,13 @@ OLLAMA_BASE_URLS = [url.strip() for url in OLLAMA_BASE_URL.split(";")]
 ####################################
 MODEL_TYPE = os.environ.get("MODEL_TYPE", "openai")  # it can be openai / azure
 AGENT_TYPE = os.environ.get("AGENT_TYPE", "react")  # it can be react / function_call
+FRAMEWORK = os.environ.get("FRAMEWORK", "langchain")  # it can be langchain / agentica
+logger.debug(f"MODEL_TYPE: {MODEL_TYPE}, AGENT_TYPE: {AGENT_TYPE}, FRAMEWORK: {FRAMEWORK}")
 
 # api key can be multiple, separated by comma(,)
-OPENAI_API_KEYS = os.environ.get("OPENAI_API_KEYS", os.environ.get("OPENAI_API_KEY"))
-OPENAI_API_KEYS = [i.strip() for i in OPENAI_API_KEYS.split(",")]
-OPENAI_API_KEY = OPENAI_API_KEYS[0]
+OPENAI_API_KEYS = os.environ.get("OPENAI_API_KEYS", os.environ.get("OPENAI_API_KEY", ""))
+OPENAI_API_KEYS = [i.strip() for i in OPENAI_API_KEYS.split(",") if OPENAI_API_KEYS]
+OPENAI_API_KEY = OPENAI_API_KEYS[0] if OPENAI_API_KEYS else ""
 
 # api base url can be multiple, separated by comma(,) same lengths as api keys
 OPENAI_API_BASE_URLS = os.environ.get(
@@ -154,6 +156,7 @@ MODEL_TOKEN_LIMIT = {
     "gpt-4-turbo-2024-04-09": 128000,
     "gpt-4o": 128000,
     "gpt-4o-2024-05-13": 128000,
+    "gpt-4o-mini": 128000,
     "moonshot-v1-8k": 8000,
     "moonshot-v1-32k": 32000,
     "moonshot-v1-128k": 128000,

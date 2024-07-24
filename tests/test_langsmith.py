@@ -8,7 +8,7 @@ import sys
 import unittest
 
 sys.path.append('..')
-from chatpilot import ChatAgent
+from chatpilot import LangchainAssistant
 
 
 class SmithTestCase(unittest.TestCase):
@@ -17,7 +17,7 @@ class SmithTestCase(unittest.TestCase):
         os.environ["LANGCHAIN_TRACING_V2"] = "true"
         os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
 
-        m = ChatAgent(model_name='gpt-3.5-turbo', max_iterations=1, max_execution_time=30, )
+        m = LangchainAssistant(model_name='gpt-3.5-turbo', max_iterations=1, max_execution_time=30, )
         print(m.llm)
         i = "计算8888*4544.2"
         print(i)
@@ -25,7 +25,7 @@ class SmithTestCase(unittest.TestCase):
         print(r)
         print("===")
 
-        m = ChatAgent(model_name='gpt-4-1106-preview')
+        m = LangchainAssistant(model_name='gpt-4-1106-preview')
         print(i)
         r = m.run(i, [])
         print(r)

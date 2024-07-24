@@ -7,9 +7,9 @@ import sys
 
 sys.path.append('..')
 
-from chatpilot import ChatAgent
+from chatpilot import LangchainAssistant
 
-m = ChatAgent()
+m = LangchainAssistant()
 
 if __name__ == '__main__':
     def demo1():
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     def demo6():
         import asyncio
         async def d():
-            m = ChatAgent()
+            m = LangchainAssistant()
 
             questions = [
                 "俄罗斯今日新闻top3",

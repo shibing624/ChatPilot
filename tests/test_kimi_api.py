@@ -7,13 +7,13 @@ import sys
 import unittest
 
 sys.path.append('..')
-from chatpilot import ChatAgent
+from chatpilot import LangchainAssistant
 from chatpilot.config import MOONSHOT_API_KEY, MOONSHOT_API_BASE
 
 
 class KimiTestCase(unittest.TestCase):
     def test_tool_usage(self):
-        m = ChatAgent(
+        m = LangchainAssistant(
             agent_type='tool',
             model_type='openai',
             model_name='moonshot-v1-8k',
@@ -40,7 +40,7 @@ class KimiTestCase(unittest.TestCase):
 
 
     def test_stream(self):
-        m = ChatAgent(
+        m = LangchainAssistant(
             model_type='openai',
             model_name='moonshot-v1-8k',
             model_api_key=MOONSHOT_API_KEY,

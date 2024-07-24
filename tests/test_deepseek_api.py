@@ -7,7 +7,7 @@ import sys
 import unittest
 
 sys.path.append('..')
-from chatpilot import ChatAgent
+from chatpilot import LangchainAssistant
 from chatpilot.config import DEEPSEEK_API_KEY,DEEPSEEK_API_BASE
 
 
@@ -33,7 +33,7 @@ class DeepseekTestCase(unittest.TestCase):
         print(response.choices[0].message.content)
 
         """
-        m = ChatAgent(
+        m = LangchainAssistant(
             agent_type='react',
             model_type='openai',
             model_name='deepseek-chat',
@@ -56,7 +56,7 @@ class DeepseekTestCase(unittest.TestCase):
 
 
     def test_stream(self):
-        m = ChatAgent(
+        m = LangchainAssistant(
             model_type='openai',
             model_name='deepseek-chat',
             model_api_key=DEEPSEEK_API_KEY,
