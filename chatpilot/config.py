@@ -132,7 +132,8 @@ OPENAI_API_BASE_URLS = os.environ.get(
 OPENAI_API_BASE_URLS = [i.strip() for i in OPENAI_API_BASE_URLS.split(",")]
 # if no api base url is provided, set it with fist one
 OPENAI_API_BASE = OPENAI_API_BASE_URLS[0]
-assert len(OPENAI_API_KEYS) == len(OPENAI_API_BASE_URLS), "Number of OpenAI API keys and base URLs should be the same"
+if OPENAI_API_KEYS and OPENAI_API_BASE_URLS:
+    assert len(OPENAI_API_KEYS) == len(OPENAI_API_BASE_URLS), "Number of OpenAI API keys and URLs should be the same"
 
 # AZURE openai api
 OPENAI_API_VERSION = os.environ.get("OPENAI_API_VERSION", None)
