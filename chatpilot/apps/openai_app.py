@@ -383,11 +383,6 @@ async def proxy(
     try:
         body_dict = json.loads(body.decode("utf-8"))
 
-        # Get the next key and base URL from the client manager
-        api_key, base_url = app.state.CLIENT_MANAGER.get_next_key_base_url()
-        show_api_key = api_key[:4] + "..." + api_key[-4:]
-        logger.debug(f"Using API key: {show_api_key}, base URL: {base_url}")
-
         model_name = body_dict.get('model', DEFAULT_MODELS[0] if DEFAULT_MODELS else "gpt-3.5-turbo")
         if app.state.MODEL_NAME is None:
             app.state.MODEL_NAME = model_name
@@ -413,10 +408,15 @@ async def proxy(
         if messages and messages[-1]["role"] == "user":
             user_question = messages[-1]["content"]
 
-        if not isinstance(user_question, str):
-            return proxy_other_request(api_key, base_url, path, body, method)
-
         if FRAMEWORK == "langchain":
+            # Get the next key and base URL from the client manager
+            api_key, base_url = app.state.CLIENT_MANAGER.get_next_key_base_url()
+            show_api_key = api_key[:4] + "..." + api_key[-4:]
+            logger.debug(f"Using API key: {show_api_key}, base URL: {base_url}")
+
+            if not isinstance(user_question, str):
+                return proxy_other_request(api_key, base_url, path, body, method)
+
             # Create a new ChatAgent instance for each request
             chat_agent = LangchainAssistant(
                 model_type=MODEL_TYPE,
