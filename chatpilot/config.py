@@ -121,9 +121,9 @@ FRAMEWORK = os.environ.get("FRAMEWORK", "langchain")  # it can be langchain / ag
 logger.debug(f"MODEL_TYPE: {MODEL_TYPE}, AGENT_TYPE: {AGENT_TYPE}, FRAMEWORK: {FRAMEWORK}")
 
 # api key can be multiple, separated by comma(,)
-OPENAI_API_KEYS = os.environ.get("OPENAI_API_KEYS", os.environ.get("OPENAI_API_KEY"))
-OPENAI_API_KEYS = [i.strip() for i in OPENAI_API_KEYS.split(",")]
-OPENAI_API_KEY = OPENAI_API_KEYS[0]
+OPENAI_API_KEYS = os.environ.get("OPENAI_API_KEYS", os.environ.get("OPENAI_API_KEY", ""))
+OPENAI_API_KEYS = [i.strip() for i in OPENAI_API_KEYS.split(",") if OPENAI_API_KEYS]
+OPENAI_API_KEY = OPENAI_API_KEYS[0] if OPENAI_API_KEYS else ""
 
 # api base url can be multiple, separated by comma(,) same lengths as api keys
 OPENAI_API_BASE_URLS = os.environ.get(
