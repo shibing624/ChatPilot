@@ -378,9 +378,6 @@ async def proxy(
     logger.debug(f"Proxying request to OpenAI: {path}, method: {method}, "
                  f"user: {user.id} {user.name} {user.email} {user.role}")
 
-    if not app.state.OPENAI_API_KEYS[0]:
-        raise HTTPException(status_code=401, detail=ERROR_MESSAGES.API_KEY_NOT_FOUND)
-
     body = await request.body()
 
     try:
