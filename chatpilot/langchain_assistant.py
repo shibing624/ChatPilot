@@ -102,8 +102,6 @@ class LangchainAssistant:
         if model_type == 'azure':
             self.llm = AzureChatOpenAI(
                 openai_api_version=os.environ.get("OPENAI_API_VERSION"),
-                openai_api_base=model_api_base,
-                openai_api_key=model_api_key,
                 temperature=temperature,
                 max_tokens=max_tokens,
                 timeout=max_execution_time,
