@@ -36,7 +36,7 @@ fake_useragent
 chromadb
 pypdf
 docx2txt
-unstructured
+#unstructured
 markdown
 pypandoc
 pandas
@@ -50,11 +50,16 @@ pyjwt[crypto]
 black
 
 # search
-duckduckgo-search~=5.1.0
+#duckduckgo-search~=5.1.0
 
 # online pdf
-pdf2image
-pillow_heif
-pytesseract
-pikepdf
+#pdf2image
+#pillow_heif
+#pytesseract
+#pikepdf
+
+# rag
 text2vec
+
+# agentica
+agentica

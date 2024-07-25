@@ -8,7 +8,7 @@
 
 -----------------
 
-# ChatPilot: Chat Agent
+# ChatPilot: Chat Agent Web UI
 [![PyPI version](https://badge.fury.io/py/ChatPilot.svg)](https://badge.fury.io/py/ChatPilot)
 [![Downloads](https://static.pepy.tech/badge/ChatPilot)](https://pepy.tech/project/ChatPilot)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -23,6 +23,14 @@
 
 ## Features
 
+- 本项目基于Agentica实现了Assistant调用，支持如下功能：
+  - 工具调用：支持Agent调用外部工具
+  - 反思：支持Agent自定义prompt
+  - 计划并执行：支持Agent计划并执行
+  - RAG：支持Agent调用RAG文件问答
+  - 多Agent：支持多Agent调用
+  - Team多角色：支持多角色调用
+  - 工作流：支持工作流调用
 - 本项目基于LangChain实现了ReAct和OpenAI Function Call的Agent问答对话，支持如下工具自动调用：
   - 联网搜索工具：Google Search API（Serper/DuckDuckGo）
   - URL自动解析工具：复现了Kimi Chat网址发出来功能
