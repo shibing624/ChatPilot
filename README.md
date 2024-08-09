@@ -18,12 +18,12 @@
 [![Wechat Group](https://img.shields.io/badge/wechat-group-green.svg?logo=wechat)](#Contact)
 
 
-**ChatPilot**: 实现AgentChat对话，支持Google搜索、文件网址对话（RAG）、代码解释器功能，复现Kimi Chat(文件，拖进来；网址，发出来)，支持OpenAI/Azure API。
+**ChatPilot**: Chat Agent WebUI, 实现了AgentChat对话，支持Google搜索、文件网址对话（RAG）、代码解释器功能，复现Kimi Chat(文件，拖进来；网址，发出来)，支持OpenAI/Azure API。
 
 
 ## Features
 
-- 本项目基于Agentica实现了Assistant调用，支持如下功能：
+- 本项目基于[Agentica](https://github.com/shibing624/agentica/tree/main)实现了Assistant调用，支持如下功能：
   - 工具调用：支持Agent调用外部工具
   - 反思：支持Agent自定义prompt
   - 计划并执行：支持Agent计划并执行
