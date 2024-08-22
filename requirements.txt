@@ -2,6 +2,7 @@ jieba>=0.39
 loguru
 tqdm
 pandas
+tiktoken
 langchain~=0.1.11
 langchain-community~=0.0.27
 langchain-openai~=0.0.8

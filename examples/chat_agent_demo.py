@@ -82,26 +82,3 @@ if __name__ == '__main__':
             print("===")
 
 
-    def demo6():
-        import asyncio
-        async def d():
-            m = LangchainAssistant()
-
-            questions = [
-                "俄罗斯今日新闻top3",
-                # "人体最大的器官是啥",
-                # "how many letters in the word 'educabe'?",
-                # "它是一个真的单词吗？",
-            ]
-            for i in questions:
-                print(i)
-                events = await m.astream_run(i)
-                async for event in events:
-                    print(event)
-                    print("===")
-                    pass
-
-        asyncio.run(d())
-
-
-    demo6()

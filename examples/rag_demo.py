@@ -15,9 +15,11 @@ if __name__ == '__main__':
     file_url = "https://docs.smith.langchain.com/overview"
     loader = WebBaseLoader(file_url)
     docs = loader.load()
+    print(docs)
     web_documents = RecursiveCharacterTextSplitter(
-        chunk_size=1000, chunk_overlap=200
+        chunk_size=2000, chunk_overlap=200
     ).split_documents(docs)
+    print('web_documents:', web_documents)
     rag_fusion = RagFusion(web_documents)
     question = "LangSmith是啥"
     result = rag_fusion.run(question)

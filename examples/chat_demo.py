@@ -19,15 +19,13 @@ if __name__ == '__main__':
     def demo6():
         import asyncio
         m = LangchainAssistant(
-            model_type='azure',
-            model_name="gpt-35-turbo",
+            model_type='openai',
+            model_name="gpt-3.5-turbo",
             model_api_key=os.getenv("OPENAI_API_KEYS"),
             model_api_base=os.getenv("OPENAI_API_BASE_URLS"),
             search_name="serper",
             agent_type="react",
             enable_search_tool=True,
-            enable_run_python_code_tool=False,
-            enable_crawler_tool=False,
             streaming=True,
         )
         async def d():
@@ -51,19 +49,12 @@ if __name__ == '__main__':
 
     def demo5():
         m = LangchainAssistant(
-            model_type='azure',
-            model_name="gpt-35-turbo",
-            model_api_key=os.getenv("OPENAI_API_KEYS"),
-            model_api_base=os.getenv("OPENAI_API_BASE_URLS"),
             search_name="serper",
             agent_type="react",
             enable_search_tool=True,
             enable_run_python_code_tool=True,
-            enable_crawler_tool=False,
         )
         questions = [
-            # "今天的俄罗斯相关的新闻top3有哪些？",
-            # "今天北京的天气怎么样？",
             "人类最大的器官是？"
         ]
         for i in questions:

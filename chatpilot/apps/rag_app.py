@@ -18,6 +18,11 @@ from chromadb.api.types import (
     Embeddings,
 )
 from chromadb.utils import embedding_functions
+from chromadb.utils.embedding_functions.openai_embedding_function import OpenAIEmbeddingFunction
+from chromadb.utils.embedding_functions.text2vec_embedding_function import Text2VecEmbeddingFunction
+from chromadb.utils.embedding_functions.sentence_transformer_embedding_function import (
+    SentenceTransformerEmbeddingFunction
+)
 from fastapi import (
     FastAPI,
     Depends,
@@ -116,13 +121,13 @@ class Word2VecEmbeddingFunction(EmbeddingFunction[ChromaDocuments]):
 
 
 if "text-embedding" in app.state.RAG_EMBEDDING_MODEL and app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
-    app.state.sentence_transformer_ef = embedding_functions.OpenAIEmbeddingFunction(
+    app.state.sentence_transformer_ef = OpenAIEmbeddingFunction(
         api_key=app.state.OPENAI_API_KEYS[0],
         api_base=app.state.OPENAI_API_BASE_URLS[0],
         model_name=app.state.RAG_EMBEDDING_MODEL,
     )
 elif "text2vec" in app.state.RAG_EMBEDDING_MODEL:
-    app.state.sentence_transformer_ef = embedding_functions.Text2VecEmbeddingFunction(
+    app.state.sentence_transformer_ef = Text2VecEmbeddingFunction(
         model_name=app.state.RAG_EMBEDDING_MODEL
     )
 elif "w2v" in app.state.RAG_EMBEDDING_MODEL:
@@ -237,7 +242,7 @@ async def update_embedding_model(
             model_name=app.state.RAG_EMBEDDING_MODEL
         )
     elif app.state.RAG_EMBEDDING_MODEL:
-        app.state.sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(
+        app.state.sentence_transformer_ef = SentenceTransformerEmbeddingFunction(
             model_name=app.state.RAG_EMBEDDING_MODEL
         )
     else:

@@ -14,15 +14,19 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_community.embeddings.text2vec import Text2vecEmbeddings
+from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from loguru import logger
-
-from chatpilot.config import RAG_TEMPLATE
+import os
+from chatpilot.config import RAG_TEMPLATE,OPENAI_API_KEY,OPENAI_API_BASE
 
 
 class RagFusion:
     def __init__(
             self,
             documents: List[Document],
+            model_api_key: str = os.getenv("OPENAI_API_KEY") or OPENAI_API_KEY,
+            model_api_base: str = os.getenv("OPENAI_API_BASE") or OPENAI_API_BASE,
             openai_model: str = "gpt-3.5-turbo-1106",
             generate_model: str = "gpt-3.5-turbo-16k",
             temperature: float = 0.0,
@@ -41,12 +45,17 @@ class RagFusion:
         ])
         # Using LLM generate more queries
         self.requery_model = ChatOpenAI(
+            openai_api_key=model_api_key,
+            openai_api_base=model_api_base,
             temperature=temperature,
             model=openai_model,
         )
         vectorstore = Chroma.from_documents(
             documents,
-            OpenAIEmbeddings()
+            OpenAIEmbeddings(
+                openai_api_key=model_api_key,
+                openai_api_base=model_api_base,
+            )
         )
         self.retriever = vectorstore.as_retriever()
 
@@ -54,6 +63,8 @@ class RagFusion:
 
         # LLM to RAG model
         self.generate_model = ChatOpenAI(
+            openai_api_key=model_api_key,
+            openai_api_base=model_api_base,
             temperature=temperature,
             model=generate_model,
         )
@@ -110,7 +121,8 @@ if __name__ == '__main__':
     }
 
     text_documents = [Document(page_content=doc, metadata={"source": f"{id}"}) for id, doc in all_documents.items()]
+    print('text_documents:', text_documents)
     rag_fusion = RagFusion(text_documents)
-    question = "气候变化的影响"
+    question = "气候变化及其经济影响"
     result = rag_fusion.run(question)
     print(result)

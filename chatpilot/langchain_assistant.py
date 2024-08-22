@@ -31,6 +31,8 @@ from chatpilot.config import (
     ENABLE_URL_CRAWLER_TOOL,
     ENABLE_RUN_PYTHON_CODE_TOOL,
     REACT_RPOMPT,
+    OPENAI_API_KEY,
+    OPENAI_API_BASE,
 )
 from chatpilot.react_parser import ReActParserAndNoTool
 
@@ -40,8 +42,8 @@ class LangchainAssistant:
             self,
             model_type: str = "openai",
             model_name: str = "gpt-3.5-turbo-1106",
-            model_api_key: str = os.getenv("OPENAI_API_KEY"),
-            model_api_base: str = os.getenv("OPENAI_API_BASE"),
+            model_api_key: str = os.getenv("OPENAI_API_KEY") or OPENAI_API_KEY,
+            model_api_base: str = os.getenv("OPENAI_API_BASE") or OPENAI_API_BASE,
             search_name: Optional[str] = "serper",
             agent_type: str = "react",
             enable_search_tool: Optional[bool] = None,
