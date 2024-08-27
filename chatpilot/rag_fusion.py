@@ -3,6 +3,8 @@
 @author:XuMing(xuming624@qq.com)
 @description:
 pip install langchain langchain-community langchain-openai
+
+use langchain to build a chatbot with multiple queries and RAG model.
 """
 
 from typing import List
