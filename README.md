@@ -23,19 +23,17 @@
 
 ## Features
 
-- 本项目基于[Agentica](https://github.com/shibing624/agentica/tree/main)实现了Assistant调用，支持如下功能：
+- 本项目基于[Agentica](https://github.com/shibing624/agentica)实现了Agent Assistant调用，支持如下功能：
   - 工具调用：支持Agent调用外部工具
+    - 联网搜索工具：Google Search API（Serper/DuckDuckGo）
+    - URL自动解析工具：复现了Kimi Chat网址发出来功能
+    - Python代码解释器：支持E2B虚拟环境和本地python编译器环境运行代码
   - 反思：支持Agent自定义prompt
   - 计划并执行：支持Agent计划并执行
   - RAG：支持Agent调用RAG文件问答
   - 多Agent：支持多Agent调用
   - Team多角色：支持多角色调用
   - 工作流：支持工作流调用
-- 本项目基于LangChain实现了ReAct和OpenAI Function Call的Agent问答对话，支持如下工具自动调用：
-  - 联网搜索工具：Google Search API（Serper/DuckDuckGo）
-  - URL自动解析工具：复现了Kimi Chat网址发出来功能
-  - Python代码解释器：支持E2B虚拟环境和本地python编译器环境运行代码
-- 本项目基于LangChain实现了支持query改写的检索增强RAG文件问答
 - 支持前后端服务分离，前端使用Svelte，后端使用FastAPI
 - 支持语音输入输出，支持图像生成
 - 支持用户管理，权限控制，支持聊天记录导入导出
@@ -128,3 +126,4 @@ BibTeX:
 
 - [Open WebUI](https://github.com/shibing624/ChatPilot)
 - [langchain-ai/langchain](https://github.com/langchain-ai/langchain)
+- [shibing624/agentica](https://github.com/shibing624/agentica)
