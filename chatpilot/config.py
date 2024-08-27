@@ -11,23 +11,22 @@ from pathlib import Path
 import yaml
 from loguru import logger
 from openai import OpenAI
+from dotenv import load_dotenv  # noqa
 
 from chatpilot.constants import ERROR_MESSAGES
 
 pwd_path = os.path.abspath(os.path.dirname(__file__))
 WEBUI_NAME = "ChatPilot"
-DOTENV_PATH = os.path.realpath(os.getenv("DOTENV_PATH", os.path.join(pwd_path, "../.env")))
-try:
-    from dotenv import load_dotenv  # noqa
+CHATPILOT_DOTENV_PATH = os.path.realpath(os.getenv("CHATPILOT_DOTENV_PATH", os.path.join(pwd_path, "../.env")))
 
-    if load_dotenv(DOTENV_PATH, override=True, verbose=True):
-        logger.info(f"Loaded environment variables from {DOTENV_PATH}")
-except ImportError:
-    logger.debug("dotenv not installed, skipping...")
+if load_dotenv(CHATPILOT_DOTENV_PATH, override=True):
+    logger.info(f"Loaded environment variables from {CHATPILOT_DOTENV_PATH}")
+else:
+    logger.warning(f"Environment variables file not found: {CHATPILOT_DOTENV_PATH}")
 
 DATA_DIR = str(os.path.expanduser(os.getenv("DATA_DIR", "~/.cache/chatpilot/data")))
 DB_PATH = f"{DATA_DIR}/web.db"
-ENV = os.environ.get("ENV", "dev")
+ENV = os.getenv("ENV", "dev")
 # Frontend build dir, which is npm build dir
 FRONTEND_BUILD_DIR = str(Path(os.getenv("FRONTEND_BUILD_DIR", os.path.join(pwd_path, "../web/build"))))
 # Frontend static dir, which is for static files like favicon, logo, etc
@@ -97,11 +96,11 @@ if not os.path.exists(LITELLM_CONFIG_PATH):
 # OLLAMA_BASE_URL
 ####################################
 
-OLLAMA_API_BASE_URL = os.environ.get(
+OLLAMA_API_BASE_URL = os.getenv(
     "OLLAMA_API_BASE_URL", "http://localhost:11434/api"
 )
 
-OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "")
 
 if OLLAMA_BASE_URL == "" and OLLAMA_API_BASE_URL != "":
     OLLAMA_BASE_URL = (
@@ -115,76 +114,32 @@ OLLAMA_BASE_URLS = [url.strip() for url in OLLAMA_BASE_URL.split(";")]
 ####################################
 # OPENAI_API
 ####################################
-MODEL_TYPE = os.environ.get("MODEL_TYPE", "openai")  # it can be openai / azure
-AGENT_TYPE = os.environ.get("AGENT_TYPE", "react")  # it can be react / function_call
-FRAMEWORK = os.environ.get("FRAMEWORK", "langchain")  # it can be langchain / agentica
-logger.debug(f"MODEL_TYPE: {MODEL_TYPE}, AGENT_TYPE: {AGENT_TYPE}, FRAMEWORK: {FRAMEWORK}")
+MODEL_TYPE = os.getenv("MODEL_TYPE", "openai")
 
-# api key can be multiple, separated by comma(,)
-OPENAI_API_KEYS = os.environ.get("OPENAI_API_KEYS", os.environ.get("OPENAI_API_KEY", ""))
-OPENAI_API_KEYS = [i.strip() for i in OPENAI_API_KEYS.split(",") if OPENAI_API_KEYS]
-OPENAI_API_KEY = OPENAI_API_KEYS[0] if OPENAI_API_KEYS else ""
-
-# api base url can be multiple, separated by comma(,) same lengths as api keys
-OPENAI_API_BASE_URLS = os.environ.get(
-    "OPENAI_API_BASE_URLS", os.environ.get("OPENAI_API_BASE", "https://api.openai.com/v1")
-)
-OPENAI_API_BASE_URLS = [i.strip() for i in OPENAI_API_BASE_URLS.split(",")]
-# if no api base url is provided, set it with fist one
-OPENAI_API_BASE = OPENAI_API_BASE_URLS[0]
-if OPENAI_API_KEYS and OPENAI_API_BASE_URLS:
-    assert len(OPENAI_API_KEYS) == len(OPENAI_API_BASE_URLS), "Number of OpenAI API keys and URLs should be the same"
-
-# AZURE openai api
-OPENAI_API_VERSION = os.environ.get("OPENAI_API_VERSION", None)
-# if OPENAI_API_VERSION not None, it will use azure openai api, please set azure_endpoint to OPENAI_API_BASE,
-# set api_key to OPENAI_API_KEY
-
-
-MODEL_TOKEN_LIMIT = {
-    "gpt-3.5-turbo": 4096,
-    "gpt-3.5-turbo-instruct": 4096,
-    "gpt-3.5-turbo-16k": 16384,
-    "gpt-3.5-turbo-1106": 16384,
-    "gpt-3.5-turbo-16k-0613": 16384,
-    "gpt-4": 8192,
-    "gpt-4-32k": 32768,
-    "gpt-4-1106-preview": 128000,
-    "gpt-4-0125-preview": 128000,
-    "gpt-4-vision-preview": 128000,
-    "gpt-4-turbo": 128000,
-    "gpt-4-turbo-preview": 128000,
-    "gpt-4-turbo-2024-04-09": 128000,
-    "gpt-4o": 128000,
-    "gpt-4o-2024-05-13": 128000,
-    "gpt-4o-mini": 128000,
-    "moonshot-v1-8k": 8000,
-    "moonshot-v1-32k": 32000,
-    "moonshot-v1-128k": 128000,
-    "deepseek-chat": 32768,
-    "deepseek-coder": 16384,
-}
+# OpenAI API
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
 
 # Dashscope Tongyi Qwen model
-DASHSCOPE_API_KEY = os.environ.get("DASHSCOPE_API_KEY", "")
+DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY", "")
 
 # Deepseek api
-DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
-DEEPSEEK_API_BASE = os.environ.get("DEEPSEEK_API_BASE", "https://api.deepseek.com/v1")
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+DEEPSEEK_API_BASE = os.getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com/v1")
 
 # Moonshot api(kimi)
-MOONSHOT_API_KEY = os.environ.get("MOONSHOT_API_KEY", "")
-MOONSHOT_API_BASE = os.environ.get("MOONSHOT_API_BASE", "https://api.moonshot.cn/v1")
+MOONSHOT_API_KEY = os.getenv("MOONSHOT_API_KEY", "")
+MOONSHOT_API_BASE = os.getenv("MOONSHOT_API_BASE", "https://api.moonshot.cn/v1")
 
-RPD = int(os.environ.get("RPD", -1))  # RPD(Request Pre Day)
-RPM = int(os.environ.get("RPM", -1))  # RPM(Request Per Minute)
+RPD = int(os.getenv("RPD", -1))  # RPD(Request Pre Day)
+RPM = int(os.getenv("RPM", -1))  # RPM(Request Per Minute)
 
 # Search engine
-SERPER_API_KEY = os.environ.get("SERPER_API_KEY", None)
-SERPAPI_API_KEY = os.environ.get("SERPAPI_API_KEY", None)
+SERPER_API_KEY = os.getenv("SERPER_API_KEY", None)
+SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY", None)
 
 # code-interpreter
-E2B_API_KEY = os.environ.get("E2B_API_KEY", None)
+E2B_API_KEY = os.getenv("E2B_API_KEY", None)
 
 ####################################
 # RAG
@@ -192,12 +147,12 @@ E2B_API_KEY = os.environ.get("E2B_API_KEY", None)
 
 CHROMA_DATA_PATH = f"{DATA_DIR}/vector_db"
 # openai embedding is support, text2vec and sentence-transformers are also available
-RAG_EMBEDDING_MODEL = os.environ.get("RAG_EMBEDDING_MODEL", "text-embedding-ada-002")
+RAG_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL", "text-embedding-ada-002")
 
-CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 1000))
-CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", 100))
-RAG_TOP_K = int(os.environ.get("RAG_TOP_K", 5))
-DOC_TEXT_LENGTH_LIMIT = int(os.environ.get("DOC_TEXT_LENGTH_LIMIT", -1))
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 1000))
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100))
+RAG_TOP_K = int(os.getenv("RAG_TOP_K", 5))
+DOC_TEXT_LENGTH_LIMIT = int(os.getenv("DOC_TEXT_LENGTH_LIMIT", -1))
 
 RAG_TEMPLATE = """根据以下文档资料（context）回答问题，不要使用外部工具。
 <context>
@@ -207,7 +162,7 @@ RAG_TEMPLATE = """根据以下文档资料（context）回答问题，不要使�
 问题: [query]
 """
 
-ENABLE_RUN_PYTHON_CODE_TOOL = os.environ.get("ENABLE_RUN_PYTHON_CODE_TOOL", "True").lower() == "true"
+ENABLE_RUN_PYTHON_CODE_TOOL = os.getenv("ENABLE_RUN_PYTHON_CODE_TOOL", "True").lower() == "true"
 RUN_PYTHON_CODE_TOOL_DESC = """Python Code Interpreter Tool. ALWAYS PRINT VARIABLES TO SHOW THE VALUE. \
 The environment is long running and exists across multiple executions. \
 You must send the whole script every time and print your outputs. \
@@ -217,10 +172,10 @@ The code should NOT be wrapped in backticks. \
 All python packages including requests, matplotlib, scipy, numpy, pandas, \
 etc are available. Create and display chart using `plt.show()`."""
 
-ENABLE_SEARCH_TOOL = os.environ.get("ENABLE_SEARCH_TOOL", "True").lower() == "true"
+ENABLE_SEARCH_TOOL = os.getenv("ENABLE_SEARCH_TOOL", "True").lower() == "true"
 SEARCH_TOOL_DESC = """A Google Search API. Useful for when you need to ask with search. Input should be a search query."""
 
-ENABLE_URL_CRAWLER_TOOL = os.environ.get("ENABLE_URL_CRAWLER_TOOL", "True").lower() == "true"
+ENABLE_URL_CRAWLER_TOOL = os.getenv("ENABLE_URL_CRAWLER_TOOL", "True").lower() == "true"
 URL_CRAWLER_TOOL_DESC = """当用户问题包含以http开头的URL链接时，可用WebUrlCrawler工具"""
 
 current_date = datetime.now().strftime("%Y-%m-%d")
@@ -260,8 +215,8 @@ Final Answer: the final answer to the original input question
 # WEBUI
 ####################################
 
-ENABLE_SIGNUP = os.environ.get("ENABLE_SIGNUP", "True").lower() == "true"
-DEFAULT_MODELS = os.environ.get("DEFAULT_MODELS", "gpt-3.5-turbo-1106")
+ENABLE_SIGNUP = os.getenv("ENABLE_SIGNUP", "True").lower() == "true"
+DEFAULT_MODELS = os.getenv("DEFAULT_MODELS", "gpt-3.5-turbo-1106")
 DEFAULT_MODELS = [i.strip() for i in DEFAULT_MODELS.split(",")]
 
 DEFAULT_PROMPT_SUGGESTIONS = (
@@ -293,8 +248,8 @@ DEFAULT_PROMPT_SUGGESTIONS = (
 DEFAULT_USER_ROLE = os.getenv("DEFAULT_USER_ROLE", "user")
 USER_PERMISSIONS = {"chat": {"deletion": True}}
 
-MODEL_FILTER_ENABLED = os.environ.get("MODEL_FILTER_ENABLED", False)
-MODEL_FILTER_LIST = os.environ.get("MODEL_FILTER_LIST", "")
+MODEL_FILTER_ENABLED = os.getenv("MODEL_FILTER_ENABLED", False)
+MODEL_FILTER_LIST = os.getenv("MODEL_FILTER_LIST", "")
 MODEL_FILTER_LIST = [model.strip() for model in MODEL_FILTER_LIST.split(",")]
 
 ####################################
@@ -307,45 +262,9 @@ WEBUI_AUTH = True
 # WEBUI_SECRET_KEY
 ####################################
 
-WEBUI_SECRET_KEY = os.environ.get(
-    "WEBUI_SECRET_KEY", os.environ.get("WEBUI_JWT_SECRET_KEY", "a0b-s3cr3t")
+WEBUI_SECRET_KEY = os.getenv(
+    "WEBUI_SECRET_KEY", os.getenv("WEBUI_JWT_SECRET_KEY", "a0b-s3cr3t")
 )
 
 if WEBUI_AUTH and WEBUI_SECRET_KEY == "":
     raise ValueError(ERROR_MESSAGES.ENV_VAR_NOT_FOUND)
-
-
-class OpenAIClientWrapper:
-    def __init__(self, keys, base_urls):
-        """
-        初始化OpenAIClientWrapper实例。
-
-        :param keys: 一个包含API密钥的列表。
-        :param base_urls: 一个包含与API密钥配套使用的基础URL的列表。
-        """
-        assert len(keys) == len(base_urls), "Keys and base URLs must have the same length."
-        self.keys = keys
-        self.base_urls = base_urls
-        self.current_index = 0
-        # 初始化时，选择第一个密钥和URL
-        self.client = OpenAI(
-            api_key=self.keys[self.current_index],
-            base_url=self.base_urls[self.current_index]
-        )
-
-    def get_client(self):
-        """
-        获取配置了当前API密钥和基础URL的OpenAI客户端实例。
-
-        :return: 配置了当前API密钥和URL的OpenAI客户端实例。
-        """
-        self.client.api_key, self.client.base_url = self.get_next_key_base_url()
-        return self.client
-
-    def get_next_key_base_url(self):
-        """用于获取下一个API密钥、URL"""
-        key = self.keys[self.current_index]
-        base_url = self.base_urls[self.current_index]
-        # 更新索引以便下次调用时使用下一个密钥
-        self.current_index = (self.current_index + 1) % len(self.keys)
-        return key, base_url

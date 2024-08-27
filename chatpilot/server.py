@@ -24,7 +24,6 @@ from chatpilot.apps.image_app import app as images_app
 from chatpilot.apps.litellm_app import app as litellm_app
 from chatpilot.apps.litellm_app import startup as litellm_app_startup
 from chatpilot.apps.ollama_app import app as ollama_app
-# from chatpilot.apps.dashscope_app import app as dashscope_app
 from chatpilot.apps.openai_app import app as openai_app
 from chatpilot.apps.rag_app import app as rag_app
 from chatpilot.apps.rag_utils import rag_messages

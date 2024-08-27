@@ -27,22 +27,18 @@ from chatpilot.apps.auth_utils import (
     get_admin_user,
 )
 from chatpilot.config import (
-    OPENAI_API_BASE_URLS,
-    OPENAI_API_KEYS,
+    OPENAI_BASE_URL,
+    OPENAI_API_KEY,
     CACHE_DIR,
     DEFAULT_MODELS,
     MODEL_FILTER_ENABLED,
     MODEL_FILTER_LIST,
     SERPER_API_KEY,
-    OpenAIClientWrapper,
     RPD,
     RPM,
     MODEL_TYPE,
-    AGENT_TYPE,
-    FRAMEWORK,
 )
 from chatpilot.constants import ERROR_MESSAGES
-from chatpilot.langchain_assistant import LangchainAssistant
 
 app = FastAPI()
 app.add_middleware(
@@ -56,15 +52,8 @@ app.add_middleware(
 app.state.MODEL_FILTER_ENABLED = MODEL_FILTER_ENABLED
 app.state.MODEL_FILTER_LIST = MODEL_FILTER_LIST
 
-app.state.OPENAI_API_KEYS = OPENAI_API_KEYS
-app.state.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
-if app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
-    # openai audio speech (TTS)
-    app.state.CLIENT_MANAGER = OpenAIClientWrapper(
-        keys=OPENAI_API_KEYS, base_urls=OPENAI_API_BASE_URLS
-    )
-else:
-    app.state.CLIENT_MANAGER = None
+app.state.OPENAI_API_KEY = OPENAI_API_KEY
+app.state.OPENAI_BASE_URL = OPENAI_BASE_URL
 
 # Get all models
 app.state.MODELS = {}
@@ -134,26 +123,26 @@ class KeysUpdateForm(BaseModel):
 
 @app.get("/urls")
 async def get_openai_urls(user=Depends(get_admin_user)):
-    return {"OPENAI_API_BASE_URLS": app.state.OPENAI_API_BASE_URLS}
+    return {"OPENAI_BASE_URL": app.state.OPENAI_BASE_URL}
 
 
 @app.post("/urls/update")
 async def update_openai_urls(form_data: UrlsUpdateForm, user=Depends(get_admin_user)):
-    app.state.OPENAI_API_BASE_URLS = form_data.urls
-    logger.info(f"update app.state.OPENAI_API_BASE_URLS: {app.state.OPENAI_API_BASE_URLS}")
-    return {"OPENAI_API_BASE_URLS": app.state.OPENAI_API_BASE_URLS}
+    app.state.OPENAI_BASE_URL = form_data.urls
+    logger.info(f"update app.state.OPENAI_BASE_URL: {app.state.OPENAI_BASE_URL}")
+    return {"OPENAI_BASE_URL": app.state.OPENAI_BASE_URL}
 
 
 @app.get("/keys")
 async def get_openai_keys(user=Depends(get_admin_user)):
-    return {"OPENAI_API_KEYS": app.state.OPENAI_API_KEYS}
+    return {"OPENAI_API_KEY": app.state.OPENAI_API_KEY}
 
 
 @app.post("/keys/update")
 async def update_openai_key(form_data: KeysUpdateForm, user=Depends(get_admin_user)):
-    app.state.OPENAI_API_KEYS = form_data.keys
-    logger.info(f"update app.state.OPENAI_API_KEYS: {app.state.OPENAI_API_KEYS}")
-    return {"OPENAI_API_KEYS": app.state.OPENAI_API_KEYS}
+    app.state.OPENAI_API_KEY = form_data.keys[0]
+    logger.info(f"update app.state.OPENAI_API_KEY: {app.state.OPENAI_API_KEY}")
+    return {"OPENAI_API_KEY": app.state.OPENAI_API_KEY}
 
 
 @app.post("/audio/speech")
@@ -164,7 +153,7 @@ async def speech(
 ):
     r = None
     try:
-        api_key, base_url = app.state.CLIENT_MANAGER.get_next_key_base_url()
+        api_key, base_url = app.state.OPENAI_API_KEY, app.state.OPENAI_BASE_URL
         body = await request.body()
         name = hashlib.sha256(body).hexdigest()
 
@@ -241,20 +230,16 @@ def merge_models_lists(model_lists):
 
 
 async def get_all_models():
-    logger.debug(f"model_type: {MODEL_TYPE}, base urls size: {len(app.state.OPENAI_API_BASE_URLS)}, "
-                 f"keys size: {len(app.state.OPENAI_API_KEYS)}")
+    logger.debug(f"model_type: {MODEL_TYPE}, base url: {app.state.OPENAI_BASE_URL}")
     if MODEL_TYPE == 'azure':
         models = {"data": [
             {"id": m, "name": m, "urlIdx": i} for i, m in enumerate(DEFAULT_MODELS)
         ]}
     else:
-        if len(app.state.OPENAI_API_KEYS) == 1 and app.state.OPENAI_API_KEYS[0] == "":
+        if not app.state.OPENAI_API_KEY:
             models = {"data": []}
         else:
-            tasks = [
-                fetch_url(f"{url}/models", app.state.OPENAI_API_KEYS[idx])
-                for idx, url in enumerate(list(set(app.state.OPENAI_API_BASE_URLS)))
-            ]
+            tasks = [fetch_url(f"{app.state.OPENAI_BASE_URL}/models", app.state.OPENAI_API_KEY)]
             responses = await asyncio.gather(*tasks)
             responses = list(
                 filter(lambda x: x is not None and "error" not in x, responses)
@@ -288,7 +273,7 @@ async def get_models(url_idx: Optional[int] = None, user=Depends(get_current_use
     else:
         try:
             logger.debug(f"get_models url_idx: {url_idx}")
-            url = app.state.OPENAI_API_BASE_URLS[url_idx]
+            url = app.state.OPENAI_BASE_URL
             r = requests.request(method="GET", url=f"{url}/models")
             r.raise_for_status()
 
@@ -408,119 +393,51 @@ async def proxy(
         if messages and messages[-1]["role"] == "user":
             user_question = messages[-1]["content"]
 
-        if FRAMEWORK == "langchain":
-            # Get the next key and base URL from the client manager
-            api_key, base_url = app.state.CLIENT_MANAGER.get_next_key_base_url()
-            show_api_key = api_key[:4] + "..." + api_key[-4:]
-            logger.debug(f"Using API key: {show_api_key}, base URL: {base_url}")
-
-            if not isinstance(user_question, str):
-                return proxy_other_request(api_key, base_url, path, body, method)
-
-            # Create a new ChatAgent instance for each request
-            chat_agent = LangchainAssistant(
-                model_type=MODEL_TYPE,
-                model_name=model_name,
-                model_api_key=api_key,
-                model_api_base=base_url,
-                search_name="serper" if SERPER_API_KEY else "duckduckgo",
-                verbose=True,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                max_context_tokens=num_ctx,
-                streaming=True,
-                max_iterations=2,
-                max_execution_time=60,
-                system_prompt=system_prompt,
-                agent_type=AGENT_TYPE,
-            )
+        # Init Agent when first request
+        if app.state.AGENT is None:
+            chat_agent = AgenticaAssistant(model_type=MODEL_TYPE, model_name=model_name, system_prompt=system_prompt)
+            app.state.AGENT = chat_agent
             logger.debug(chat_agent)
-            events = await chat_agent.astream_run(user_question, chat_history=history)
-            created = int(time.time())
-
-            async def event_generator():
-                """组装为OpenAI格式流式输出"""
-                async for event in events:
-                    kind = event['event']
-                    if kind in ['on_tool_start', 'on_chat_model_stream']:
-                        if kind == "on_tool_start":
-                            c = str(event['data'].get('input', ''))
-                        else:
-                            c = event['data']['chunk'].content
-                            if not c:
-                                tool_call_chunks = event['data'].get("tool_call_chunks", [])
-                                if tool_call_chunks:
-                                    c = tool_call_chunks[0].get("args", "")
-                        if c:
-                            data_structure = {
-                                "id": event.get('id', 'default_id'),
-                                "object": "chat.completion.chunk",
-                                "created": event.get('created', created),
-                                "model": model_name,
-                                "system_fingerprint": event.get('system_fingerprint', ''),
-                                "choices": [
-                                    {
-                                        "index": 0,
-                                        "delta": {"content": c},
-                                        "logprobs": None,
-                                        "finish_reason": None
-                                    }
-                                ]
-                            }
-                            formatted_data = f"data: {json.dumps(data_structure)}\n\n"
-                            yield formatted_data.encode()
-
-                formatted_data_done = f"data: [DONE]\n\n"
-                yield formatted_data_done.encode()
-
-            return StreamingResponse(event_generator(), media_type='text/event-stream')
-        elif FRAMEWORK == "agentica":
-            # Init Agent when first request
-            if app.state.AGENT is None:
-                chat_agent = AgenticaAssistant(model_type=MODEL_TYPE, model_name=model_name)
-                app.state.AGENT = chat_agent
-                logger.debug(chat_agent)
-            elif app.state.MODEL_NAME != model_name:
-                chat_agent = AgenticaAssistant(model_type=MODEL_TYPE, model_name=model_name)
-                app.state.AGENT = chat_agent
-                app.state.MODEL_NAME = model_name
-                logger.debug(chat_agent)
-            else:
-                if history:
-                    chat_agent = app.state.AGENT
-                else:
-                    chat_agent = AgenticaAssistant(model_type=MODEL_TYPE, model_name=model_name)
-                    app.state.AGENT = chat_agent
-            events = chat_agent.stream_run(user_question)
-            created = int(time.time())
-
-            def event_generator():
-                """组装为OpenAI格式流式输出"""
-                for event in events:
-                    data_structure = {
-                        "id": 'default_id',
-                        "object": "chat.completion.chunk",
-                        "created": created,
-                        "model": model_name,
-                        "system_fingerprint": '',
-                        "choices": [
-                            {
-                                "index": 0,
-                                "delta": {"content": event},
-                                "logprobs": None,
-                                "finish_reason": None
-                            }
-                        ]
-                    }
-                    formatted_data = f"data: {json.dumps(data_structure)}\n\n"
-                    yield formatted_data.encode()
-
-                formatted_data_done = f"data: [DONE]\n\n"
-                yield formatted_data_done.encode()
-
-            return StreamingResponse(event_generator(), media_type='text/event-stream')
+        elif app.state.MODEL_NAME != model_name:
+            chat_agent = AgenticaAssistant(model_type=MODEL_TYPE, model_name=model_name, system_prompt=system_prompt)
+            app.state.AGENT = chat_agent
+            app.state.MODEL_NAME = model_name
+            logger.debug(chat_agent)
         else:
-            raise ValueError(f"Not support: {FRAMEWORK}")
+            if history:
+                chat_agent = app.state.AGENT
+            else:
+                chat_agent = AgenticaAssistant(model_type=MODEL_TYPE, model_name=model_name,
+                                               system_prompt=system_prompt)
+                app.state.AGENT = chat_agent
+        events = chat_agent.stream_run(user_question)
+        created = int(time.time())
+
+        def event_generator():
+            """组装为OpenAI格式流式输出"""
+            for event in events:
+                data_structure = {
+                    "id": 'default_id',
+                    "object": "chat.completion.chunk",
+                    "created": created,
+                    "model": model_name,
+                    "system_fingerprint": '',
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {"content": event},
+                            "logprobs": None,
+                            "finish_reason": None
+                        }
+                    ]
+                }
+                formatted_data = f"data: {json.dumps(data_structure)}\n\n"
+                yield formatted_data.encode()
+
+            formatted_data_done = f"data: [DONE]\n\n"
+            yield formatted_data_done.encode()
+
+        return StreamingResponse(event_generator(), media_type='text/event-stream')
     except Exception as e:
         logger.error(e)
         error_detail = "Server Connection Error"

@@ -21,9 +21,9 @@ from chatpilot.apps.auth_utils import (
     get_admin_user
 )
 from chatpilot.config import (
-    OPENAI_API_BASE_URLS,
-    OPENAI_API_KEYS,
-    CACHE_DIR, OpenAIClientWrapper
+    OPENAI_BASE_URL,
+    OPENAI_API_KEY,
+    CACHE_DIR
 )
 from chatpilot.constants import ERROR_MESSAGES
 
@@ -40,14 +40,8 @@ app.add_middleware(
 )
 
 app.state.ENGINE = "openai"
-app.state.OPENAI_API_KEYS = OPENAI_API_KEYS
-app.state.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
-if app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
-    app.state.CLIENT_MANAGER = OpenAIClientWrapper(
-        keys=OPENAI_API_KEYS, base_urls=OPENAI_API_BASE_URLS
-    )
-else:
-    app.state.CLIENT_MANAGER = None
+app.state.OPENAI_API_KEY = OPENAI_API_KEY
+app.state.OPENAI_BASE_URL = OPENAI_BASE_URL
 app.state.ENABLED = False
 app.state.MODEL = "dall-e-3"
 
@@ -82,19 +76,19 @@ class OpenAIKeyUpdateForm(BaseModel):
 
 @app.get("/key")
 async def get_openai_key(user=Depends(get_admin_user)):
-    return {"OPENAI_API_KEY": app.state.OPENAI_API_KEYS[0]}
+    return {"OPENAI_API_KEY": app.state.OPENAI_API_KEY}
 
 
 @app.post("/key/update")
 async def update_openai_key(
         form_data: OpenAIKeyUpdateForm, user=Depends(get_admin_user)
 ):
-    if not app.state.OPENAI_API_KEYS[0] and form_data.key == "":
+    if not app.state.OPENAI_API_KEY:
         raise HTTPException(status_code=400, detail=ERROR_MESSAGES.API_KEY_NOT_FOUND)
     if form_data.key:
-        app.state.OPENAI_API_KEYS[0] = form_data.key
+        app.state.OPENAI_API_KEY = form_data.key
     return {
-        "OPENAI_API_KEY": app.state.OPENAI_API_KEYS[0],
+        "OPENAI_API_KEY": app.state.OPENAI_API_KEY,
         "status": True,
     }
 
@@ -226,7 +220,7 @@ def generate_image(
     r = None
     try:
         if app.state.ENGINE == "openai":
-            api_key, base_url = app.state.CLIENT_MANAGER.get_next_key_base_url()
+            api_key, base_url = app.state.OPENAI_API_KEY, app.state.OPENAI_BASE_URL
             headers = {}
             headers["Authorization"] = f"Bearer {api_key}"
             headers["Content-Type"] = "application/json"

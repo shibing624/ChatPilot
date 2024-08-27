@@ -17,7 +17,6 @@ from chromadb.api.types import (
     EmbeddingFunction,
     Embeddings,
 )
-from chromadb.utils import embedding_functions
 from chromadb.utils.embedding_functions.openai_embedding_function import OpenAIEmbeddingFunction
 from chromadb.utils.embedding_functions.text2vec_embedding_function import Text2VecEmbeddingFunction
 from chromadb.utils.embedding_functions.sentence_transformer_embedding_function import (
@@ -68,8 +67,8 @@ from chatpilot.config import (
     CHUNK_OVERLAP,
     RAG_TEMPLATE,
     RAG_TOP_K,
-    OPENAI_API_KEYS,
-    OPENAI_API_BASE_URLS,
+    OPENAI_API_KEY,
+    OPENAI_BASE_URL,
     DOC_TEXT_LENGTH_LIMIT,
 )
 from chatpilot.constants import ERROR_MESSAGES
@@ -82,8 +81,8 @@ app.state.CHUNK_OVERLAP = CHUNK_OVERLAP
 app.state.RAG_TEMPLATE = RAG_TEMPLATE
 app.state.RAG_EMBEDDING_MODEL = RAG_EMBEDDING_MODEL
 app.state.TOP_K = RAG_TOP_K
-app.state.OPENAI_API_KEYS = OPENAI_API_KEYS
-app.state.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
+app.state.OPENAI_API_KEY = OPENAI_API_KEY
+app.state.OPENAI_BASE_URL = OPENAI_BASE_URL
 
 
 class LiteralHashEmbeddingFunction(EmbeddingFunction[ChromaDocuments]):
@@ -120,10 +119,10 @@ class Word2VecEmbeddingFunction(EmbeddingFunction[ChromaDocuments]):
         )  # noqa E501
 
 
-if "text-embedding" in app.state.RAG_EMBEDDING_MODEL and app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
+if "text-embedding" in app.state.RAG_EMBEDDING_MODEL and app.state.OPENAI_API_KEY:
     app.state.sentence_transformer_ef = OpenAIEmbeddingFunction(
-        api_key=app.state.OPENAI_API_KEYS[0],
-        api_base=app.state.OPENAI_API_BASE_URLS[0],
+        api_key=app.state.OPENAI_API_KEY,
+        api_base=app.state.OPENAI_BASE_URL,
         model_name=app.state.RAG_EMBEDDING_MODEL,
     )
 elif "text2vec" in app.state.RAG_EMBEDDING_MODEL:
@@ -221,19 +220,16 @@ async def update_embedding_model(
 ):
     app.state.RAG_EMBEDDING_MODEL = form_data.embedding_model
     if "text2vec" in app.state.RAG_EMBEDDING_MODEL:
-        app.state.sentence_transformer_ef = (
-            embedding_functions.Text2VecEmbeddingFunction(
-                model_name=app.state.RAG_EMBEDDING_MODEL,
-            )
+        app.state.sentence_transformer_ef = Text2VecEmbeddingFunction(
+            model_name=app.state.RAG_EMBEDDING_MODEL,
         )
     elif "text-embedding" in app.state.RAG_EMBEDDING_MODEL:
-        if app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
-            app.state.sentence_transformer_ef = (
-                embedding_functions.OpenAIEmbeddingFunction(
-                    api_key=app.state.OPENAI_API_KEYS[0],
-                    api_base=app.state.OPENAI_API_BASE_URLS[0],
-                    model_name=app.state.RAG_EMBEDDING_MODEL,
-                )
+        if app.state.OPENAI_API_KEY:
+            app.state.sentence_transformer_ef = OpenAIEmbeddingFunction(
+                api_key=app.state.OPENAI_API_KEY,
+                api_base=app.state.OPENAI_BASE_URL,
+                model_name=app.state.RAG_EMBEDDING_MODEL,
+
             )
         else:
             raise ValueError("No OpenAI API key found")

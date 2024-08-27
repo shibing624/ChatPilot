@@ -36,25 +36,22 @@ Official Demo: https://chat.mulanai.com
 
 ![](https://github.com/shibing624/ChatPilot/blob/main/docs/shot.png)
 
-## Install
-```shell
-pip install -U chatpilot
-```
+## Getting Started
 
-or
 
 ```shell
 git clone https://github.com/shibing624/ChatPilot.git
 cd ChatPilot
-pip install -e .
+pip install -r requirements.txt
+
+# Copying required .env file, and fill in the LLM api key
+cp .env.example .env
+
+bash start.sh
 ```
+Ok, now your application is running: http://0.0.0.0:8080 Enjoy! 😄
 
-
-## Usage
-
-### Local deployment
-
-#### 1. Build front-end web
+## Build front-end web
 
 Two ways to build the front end:
 1. Download the packaged and compiled front-end [buid.zip](https://github.com/shibing624/ChatPilot/releases/download/0.1.2/build.zip) and extract it to the project web directory.
@@ -78,48 +75,7 @@ npm install
 npm run build
 ```
 Output: The project `web` directory outputs the `build` folder, which contains the front-end compilation output files.
-#### 2. Start the backend service
 
-```shell
-cd ..
-pip install -r requirements.txt -U
-bash start.sh
-```
-Ok, now your application is running: http://0.0.0.0:8080 Enjoy! 😄
-
-### CLI
-
-code: [cli.py](https://github.com/shibing624/ChatPilot/blob/main/chatpilot/cli.py)
-
-```
-> chatpilot -h                                    
-usage: __main__.py [-h] [--model MODEL] [--search SEARCH] [--openai_api_key OPENAI_API_KEY] [--openai_api_base OPENAI_API_BASE] [--serper_api_key SERPER_API_KEY]
-
-
-
-chatpilot cli
-
-
-options:
-  -h, --help            show this help message and exit
-  --model MODEL         openai model name
-  --search SEARCH       search engine name, e.g. duckduckgo, serper
-  --openai_api_key OPENAI_API_KEY
-                        openai api key
-  --openai_api_base OPENAI_API_BASE
-                        openai api base url
-  --serper_api_key SERPER_API_KEY
-                        serper api key
-```
-
-run：
-
-```shell
-pip install chatpilot -U
-chatpilot
-```
-
-> User: Input question，e.g: "introduce beijing"
 
 ## Contact
 

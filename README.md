@@ -53,9 +53,9 @@ Official Demo: https://chat.mulanai.com
 ```shell
 git clone https://github.com/shibing624/ChatPilot.git
 cd ChatPilot
-pip install -r requirements.txt -U
+pip install -r requirements.txt
 
-# Copying required .env file
+# Copying required .env file, and fill in the LLM api key
 cp .env.example .env
 
 bash start.sh
@@ -79,41 +79,6 @@ bash start.sh
   ```
   输出：项目`web`目录产出`build`文件夹，包含了前端编译输出文件。
 
-## 命令行模式（CLI）
-
-支持命令行对话。
-
-code: [cli.py](https://github.com/shibing624/ChatPilot/blob/main/chatpilot/cli.py)
-
-```
-> chatpilot -h                                    
-usage: __main__.py [-h] [--model MODEL] [--search SEARCH] [--openai_api_key OPENAI_API_KEY] [--openai_api_base OPENAI_API_BASE] [--serper_api_key SERPER_API_KEY]
-
-
-
-chatpilot cli
-
-
-options:
-  -h, --help            show this help message and exit
-  --model MODEL         openai model name
-  --search SEARCH       search engine name, e.g. duckduckgo, serper
-  --openai_api_key OPENAI_API_KEY
-                        openai api key
-  --openai_api_base OPENAI_API_BASE
-                        openai api base url
-  --serper_api_key SERPER_API_KEY
-                        serper api key
-```
-
-run：
-
-```shell
-pip install chatpilot -U
-chatpilot -h
-```
-
-> User: 输入问题, 如："一句话介绍北京"。
 
 ## Contact
 

@@ -3,10 +3,6 @@ loguru
 tqdm
 pandas
 tiktoken
-langchain~=0.1.11
-langchain-community~=0.0.27
-langchain-openai~=0.0.8
-langchain-experimental~=0.0.53
 openai~=1.13.3
 
 fastapi
@@ -37,9 +33,7 @@ fake_useragent
 chromadb
 pypdf
 docx2txt
-#unstructured
 markdown
-pypandoc
 pandas
 openpyxl
 pyxlsb
@@ -49,15 +43,6 @@ PyJWT
 pyjwt[crypto]
 
 black
-
-# search
-#duckduckgo-search~=5.1.0
-
-# online pdf
-#pdf2image
-#pillow_heif
-#pytesseract
-#pikepdf
 
 # rag
 text2vec

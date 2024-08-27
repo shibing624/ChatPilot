@@ -21,4 +21,4 @@ fi
 
 export WEBUI_SECRET_KEY="$WEBUI_SECRET_KEY"
 ps -ef | grep "chatpilot" | grep -v "grep" | awk '{print $2}' | xargs kill -9
-gunicorn -k uvicorn.workers.UvicornWorker chatpilot.server:app --bind 0.0.0.0:$PORT --forwarded-allow-ips '*' -w 2
+gunicorn -k uvicorn.workers.UvicornWorker chatpilot.server:app --bind 0.0.0.0:$PORT --forwarded-allow-ips '*' -w 1

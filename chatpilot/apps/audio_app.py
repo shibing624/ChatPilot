@@ -11,15 +11,15 @@ from fastapi import (
     UploadFile,
     File,
 )
+from openai import Client
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from chatpilot.apps.auth_utils import get_current_user
 from chatpilot.config import (
-    OPENAI_API_BASE_URLS,
-    OPENAI_API_KEYS,
+    OPENAI_BASE_URL,
+    OPENAI_API_KEY,
     UPLOAD_DIR,
-    OpenAIClientWrapper
 )
 from chatpilot.constants import ERROR_MESSAGES
 
@@ -31,14 +31,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.state.OPENAI_API_KEYS = OPENAI_API_KEYS
-app.state.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
-if app.state.OPENAI_API_KEYS and app.state.OPENAI_API_KEYS[0]:
-    app.state.CLIENT_MANAGER = OpenAIClientWrapper(
-        keys=OPENAI_API_KEYS, base_urls=OPENAI_API_BASE_URLS
-    )
-else:
-    app.state.CLIENT_MANAGER = None
+app.state.OPENAI_API_KEY = OPENAI_API_KEY
+app.state.OPENAI_BASE_URL = OPENAI_BASE_URL
 
 
 @app.post("/transcribe")
@@ -51,7 +45,7 @@ def transcribe(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ERROR_MESSAGES.FILE_NOT_SUPPORTED,
         )
-    if not app.state.OPENAI_API_KEYS[0]:
+    if not app.state.OPENAI_API_KEY:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ERROR_MESSAGES.OPENAI_NOT_FOUND,
@@ -64,7 +58,7 @@ def transcribe(
         with open(file_path, "wb") as f:
             f.write(contents)
 
-        client = app.state.CLIENT_MANAGER.get_client()
+        client = Client(api_key=app.state.OPENAI_API_KE, base_url=app.state.OPENAI_BASE_URL)
         with open(file_path, "rb") as audio_file:
             transcript = client.audio.transcriptions.create(
                 model="whisper-1",
