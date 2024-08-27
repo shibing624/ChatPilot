@@ -1,4 +1,6 @@
-#!/usr/bin/env bash
+#!/bin/bash
+# 确保脚本在任何错误时退出
+set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd "$SCRIPT_DIR" || exit
@@ -21,4 +23,6 @@ fi
 
 export WEBUI_SECRET_KEY="$WEBUI_SECRET_KEY"
 ps -ef | grep "chatpilot" | grep -v "grep" | awk '{print $2}' | xargs kill -9
+echo "PORT is set to: $PORT"
+echo "$WEBUI_SECRET_KEY"
 gunicorn -k uvicorn.workers.UvicornWorker chatpilot.server:app --bind 0.0.0.0:$PORT --forwarded-allow-ips '*' -w 1
