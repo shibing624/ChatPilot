@@ -5,7 +5,7 @@
 """
 from typing import Optional
 
-from agentica import PythonAssistant, AzureOpenAILLM, OpenAILLM, Assistant
+from agentica import PythonAssistant, AzureOpenAILLM, OpenAILLM, Assistant, MoonshotLLM, DeepseekLLM
 from agentica.tools.search_serper import SearchSerperTool
 from agentica.tools.url_crawler import UrlCrawlerTool
 
@@ -30,7 +30,7 @@ class AgenticaAssistant:
         """
         Initializes the ChatAgent with the given parameters.
 
-        :param model_type: The type of the model, such as "openai" / "azure".
+        :param model_type: The type of the model, such as "openai" / "azure" / "moonshot" / "deepseek".
         :param model_name: The model name of OpenAI.
         :param model_api_key: The API keys for the OpenAI API.
         :param model_api_base: The base URLs for the OpenAI API.
@@ -49,6 +49,16 @@ class AgenticaAssistant:
             )
         elif model_type == 'openai':
             self.llm = OpenAILLM(
+                model=model_name,
+                **kwargs
+            )
+        elif model_type == "moonshot":
+            self.llm = MoonshotLLM(
+                model=model_name,
+                **kwargs
+            )
+        elif model_type == "deepseek":
+            self.llm = DeepseekLLM(
                 model=model_name,
                 **kwargs
             )

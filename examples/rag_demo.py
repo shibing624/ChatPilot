@@ -10,6 +10,9 @@ from langchain_community.document_loaders import WebBaseLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from chatpilot.rag_fusion import RagFusion
+from dotenv import load_dotenv  # noqa
+
+load_dotenv('../.env', override=True, verbose=True)
 
 if __name__ == '__main__':
     file_url = "https://docs.smith.langchain.com/overview"

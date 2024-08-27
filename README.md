@@ -46,29 +46,28 @@ Official Demo: https://chat.mulanai.com
 
 ![](https://github.com/shibing624/ChatPilot/blob/main/docs/shot.png)
 
-## Install
-```shell
-pip install -U chatpilot
-```
+## Getting Started
 
-or
+### 启动服务
 
 ```shell
 git clone https://github.com/shibing624/ChatPilot.git
 cd ChatPilot
-pip install -e .
+pip install -r requirements.txt -U
+
+# Copying required .env file
+cp .env.example .env
+
+bash start.sh
 ```
+好了，现在你的应用正在运行：http://0.0.0.0:8080 Enjoy! 😄
 
 
-## Usage
-
-### 本地部署
-
-#### 1. 构建前端web
+## 构建前端web
 
 两种方法构建前端：
 1. 下载打包并编译好的前端 [buid.zip](https://github.com/shibing624/ChatPilot/releases/download/0.1.2/build.zip) 解压到项目web目录下。
-2. 自己使用npm构建前端：
+2. 如果修改了web前端代码，需要自己使用npm重新构建前端：
   ```sh
   git clone https://github.com/shibing624/ChatPilot.git
   cd ChatPilot/
@@ -80,21 +79,7 @@ pip install -e .
   ```
   输出：项目`web`目录产出`build`文件夹，包含了前端编译输出文件。
 
-#### 2. 启动后端服务
-
-```shell
-cd ..
-pip install -r requirements.txt -U
-
-# Copying required .env file
-cp .env.example .env
-
-bash start.sh
-```
-好了，现在你的应用正在运行：http://0.0.0.0:8080 Enjoy! 😄
-
-
-### 命令行模式（CLI）
+## 命令行模式（CLI）
 
 支持命令行对话。
 
@@ -125,7 +110,7 @@ run：
 
 ```shell
 pip install chatpilot -U
-chatpilot
+chatpilot -h
 ```
 
 > User: 输入问题, 如："一句话介绍北京"。

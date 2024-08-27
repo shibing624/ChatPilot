@@ -41,8 +41,6 @@ from chatpilot.config import (
 from chatpilot.constants import ERROR_MESSAGES
 from chatpilot.version import __version__ as VERSION
 
-pwd_path = os.path.abspath(os.path.dirname(__file__))
-
 logger.info(f"""
 ENV: {ENV}
 WEBUI_NAME: {WEBUI_NAME}

@@ -14,11 +14,9 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_community.embeddings.text2vec import Text2vecEmbeddings
-from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from loguru import logger
 import os
-from chatpilot.config import RAG_TEMPLATE,OPENAI_API_KEY,OPENAI_API_BASE
+from chatpilot.config import RAG_TEMPLATE, OPENAI_API_KEY, OPENAI_API_BASE
 
 
 class RagFusion:

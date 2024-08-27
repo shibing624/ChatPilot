@@ -8,7 +8,9 @@ import sys
 sys.path.append('..')
 
 from chatpilot import LangchainAssistant
+from dotenv import load_dotenv  # noqa
 
+load_dotenv('../.env', override=True, verbose=True)
 m = LangchainAssistant()
 
 if __name__ == '__main__':
@@ -80,5 +82,3 @@ if __name__ == '__main__':
             print(m.llm.model_name, m.llm)
             m.run(i)
             print("===")
-
-
