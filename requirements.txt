@@ -3,17 +3,22 @@ loguru
 tqdm
 pandas
 tiktoken
-openai~=1.13.3
+openai
 
+# rag
+text2vec
+
+# agent
+agentica
+
+# serve
 fastapi
 loguru
 uvicorn[standard]
+gunicorn
 pydantic
 python-multipart
 sse-starlette
-
-flask
-flask_cors
 
 python-socketio
 python-jose
@@ -25,7 +30,7 @@ aiohttp
 peewee
 bcrypt
 
-litellm==1.30.7
+litellm
 argon2-cffi
 apscheduler
 
@@ -43,9 +48,3 @@ PyJWT
 pyjwt[crypto]
 
 black
-
-# rag
-text2vec
-
-# agentica
-agentica
