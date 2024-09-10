@@ -58,7 +58,7 @@ docker run -it \
  -e RAG_EMBEDDING_MODEL="text-embedding-ada-002" \
  -p 8080:8080 --name chatpilot-$(date +%Y%m%d%H%M%S) shibing624/chatpilot:0.0.1
 ```
-You'll find ChatPilot running at http://localhost:8080
+You'll find ChatPilot running at http://0.0.0.0:8080 Enjoy! 😄
 
 ### 本地启动服务
 
