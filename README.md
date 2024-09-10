@@ -46,7 +46,21 @@ Official Demo: https://chat.mulanai.com
 
 ## Getting Started
 
-### 启动服务
+### Run ChatPilot in Docker
+
+```shell
+export OPENAI_API_KEY=sk-xxx
+export OPENAI_BASE_URL=https://xxx/v1
+
+docker run -it \
+ -e OPENAI_API_KEY=$WORKSPACE_BASE \
+ -e OPENAI_BASE_URL=$OPENAI_BASE_URL \
+ -e RAG_EMBEDDING_MODEL="text-embedding-ada-002" \
+ -p 8080:8080 --name chatpilot-$(date +%Y%m%d%H%M%S) shibing624/chatpilot:0.0.1
+```
+You'll find ChatPilot running at http://localhost:8080
+
+### 本地启动服务
 
 ```shell
 git clone https://github.com/shibing624/ChatPilot.git
