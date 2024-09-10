@@ -10,7 +10,6 @@ from pathlib import Path
 
 import yaml
 from loguru import logger
-from openai import OpenAI
 from dotenv import load_dotenv  # noqa
 
 from chatpilot.constants import ERROR_MESSAGES

@@ -7,44 +7,44 @@ openai
 
 # rag
 text2vec
+chromadb
 
 # agent
 agentica
+langchain
+langchain_community
+dashscope
 
 # serve
 fastapi
 loguru
 uvicorn[standard]
 gunicorn
-pydantic
 python-multipart
 sse-starlette
 
 python-socketio
 python-jose
 passlib[bcrypt]
+bcrypt
 uuid
 
 requests
 aiohttp
 peewee
-bcrypt
+
 
 litellm
 argon2-cffi
 apscheduler
 
 fake_useragent
-chromadb
 pypdf
 docx2txt
 markdown
 pandas
 openpyxl
-pyxlsb
-xlrd
 
+# jwt
 PyJWT
 pyjwt[crypto]
-
-black

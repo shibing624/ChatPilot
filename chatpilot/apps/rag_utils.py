@@ -20,7 +20,7 @@ try:
     )
 except Exception as e:
     CHROMA_CLIENT = None
-    logger.warning(f"ChromaDB client failed to initialize: {e}")
+    logger.error(f"ChromaDB client failed to initialize: {e}")
 
 
 class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):

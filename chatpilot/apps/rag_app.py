@@ -375,7 +375,7 @@ def store_web(form_data: StoreWebForm, user=Depends(get_current_user)):
             data = loader.load()
 
         collection_name = form_data.collection_name
-        if collection_name == "":
+        if not collection_name:
             collection_name = calculate_sha256_string(form_data.url)[:63]
 
         store_data_in_vector_db(data, collection_name, overwrite=True)
@@ -493,7 +493,7 @@ def store_doc(
             f.close()
 
         f = open(file_path, "rb")
-        if collection_name is None:
+        if not collection_name:
             collection_name = calculate_sha256(f)[:63]
         f.close()
 
