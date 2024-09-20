@@ -109,7 +109,7 @@ export MODEL_TYPE="azure"
 以`ollama serve`启动ollama服务，然后配置`OLLAMA_API_URL`：`export OLLAMA_API_URL=http://localhost:11413`
 
 #### 使用litellm Api接入各云服务部署模型
-1. 按照litellm：
+1. 安装`litellm`包：
 
 ```shell
 pip install litellm -U
