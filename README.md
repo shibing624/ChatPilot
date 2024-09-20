@@ -88,6 +88,21 @@ bash start.sh
   输出：项目`web`目录产出`build`文件夹，包含了前端编译输出文件。
 
 ### 多种LLM接入
+#### 使用OpenAI Api接入GPT系列模型
+- 使用OpenAI API，配置环境变量：
+```shell
+export OPENAI_API_KEY=xxx
+export OPENAI_BASE_URL=https://api.openai.com/v1
+export MODEL_TYPE="openai"
+```
+
+- 如果使用Azure OpenAI API，需要配置如下环境变量：
+```shell
+export AZURE_OPENAI_API_KEY=
+export AZURE_OPENAI_API_VERSION=
+export AZURE_OPENAI_ENDPOINT=
+export MODEL_TYPE="azure"
+```
 
 #### 使用Ollama Api接入各种本地开源模型
 
@@ -116,22 +131,6 @@ model_list:
 litellm_settings: # module level litellm settings - https://github.com/BerriAI/litellm/blob/main/litellm/__init__.py
   drop_params: True
   set_verbose: False
-```
-
-#### 使用OpenAI Api接入GPT系列模型
-- 使用OpenAI API，配置环境变量：
-```shell
-export OPENAI_API_KEY=xxx
-export OPENAI_BASE_URL=https://api.openai.com/v1
-export MODEL_TYPE="openai"
-```
-
-- 如果使用Azure OpenAI API，需要配置如下环境变量：
-```shell
-export AZURE_OPENAI_API_KEY=
-export AZURE_OPENAI_API_VERSION=
-export AZURE_OPENAI_ENDPOINT=
-export MODEL_TYPE="azure"
 ```
 
 ## Contact
