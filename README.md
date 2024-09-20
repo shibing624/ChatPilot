@@ -28,12 +28,8 @@
     - 联网搜索工具：Google Search API（Serper/DuckDuckGo）
     - URL自动解析工具：复现了Kimi Chat网址发出来功能
     - Python代码解释器：支持E2B虚拟环境和本地python编译器环境运行代码
-  - 反思：支持Agent自定义prompt
-  - 计划并执行：支持Agent计划并执行
+  - 多种LLM接入：支持多种LLM模型以多方式接入，包括使用Ollama Api接入各种本地开源模型；使用litellm Api接入各云服务部署模型；使用OpenAI Api接入GPT系列模型
   - RAG：支持Agent调用RAG文件问答
-  - 多Agent：支持多Agent调用
-  - Team多角色：支持多角色调用
-  - 工作流：支持工作流调用
 - 支持前后端服务分离，前端使用Svelte，后端使用FastAPI
 - 支持语音输入输出，支持图像生成
 - 支持用户管理，权限控制，支持聊天记录导入导出
@@ -75,7 +71,7 @@ bash start.sh
 好了，现在你的应用正在运行：http://0.0.0.0:8080 Enjoy! 😄
 
 
-## 构建前端web
+### 构建前端web
 
 两种方法构建前端：
 1. 下载打包并编译好的前端 [buid.zip](https://github.com/shibing624/ChatPilot/releases/download/0.1.2/build.zip) 解压到项目web目录下。
@@ -91,6 +87,52 @@ bash start.sh
   ```
   输出：项目`web`目录产出`build`文件夹，包含了前端编译输出文件。
 
+### 多种LLM接入
+
+#### 使用Ollama Api接入各种本地开源模型
+
+以`ollama serve`启动ollama服务，然后配置`OLLAMA_API_URL`：`export OLLAMA_API_URL=http://localhost:11413`
+
+#### 使用litellm Api接入各云服务部署模型
+`chatpilot`默认的litellm config文件在`~/.cache/chatpilot/data/litellm/config.yaml`
+
+修改其内容如下：
+```yaml
+model_list:
+#  - model_name: moonshot-v1-auto ### RECEIVED MODEL NAME ###
+#    litellm_params: # all params accepted by litellm.completion() - https://docs.litellm.ai/docs/completion/input
+#      model: openai/moonshot-v1-auto ### MODEL NAME sent to `litellm.completion()` ###
+#      api_base: https://api.moonshot.cn/v1
+#      api_key: sk-xx
+#      rpm: 500      # [OPTIONAL] Rate limit for this deployment: in requests per minute (rpm)
+
+  - model_name: deepseek-ai/DeepSeek-Coder
+    litellm_params: # all params accepted by litellm.completion() - https://docs.litellm.ai/docs/completion/input
+      model: openai/deepseek-coder ### MODEL NAME sent to `litellm.completion()` ###
+      api_base: https://api.deepseek.com/v1
+      api_key: sk-xx
+      rpm: 500
+
+litellm_settings: # module level litellm settings - https://github.com/BerriAI/litellm/blob/main/litellm/__init__.py
+  drop_params: True
+  set_verbose: False
+```
+
+#### 使用OpenAI Api接入GPT系列模型
+- 使用OpenAI API，配置环境变量：
+```shell
+export OPENAI_API_KEY=xxx
+export OPENAI_BASE_URL=https://api.openai.com/v1
+export MODEL_TYPE="openai"
+```
+
+- 如果使用Azure OpenAI API，需要配置如下环境变量：
+```shell
+export AZURE_OPENAI_API_KEY=
+export AZURE_OPENAI_API_VERSION=
+export AZURE_OPENAI_ENDPOINT=
+export MODEL_TYPE="azure"
+```
 
 ## Contact
 
