@@ -109,6 +109,14 @@ export MODEL_TYPE="azure"
 以`ollama serve`启动ollama服务，然后配置`OLLAMA_API_URL`：`export OLLAMA_API_URL=http://localhost:11413`
 
 #### 使用litellm Api接入各云服务部署模型
+1. 按照litellm：
+
+```shell
+pip install litellm -U
+```
+
+2. 修改配置文件
+
 `chatpilot`默认的litellm config文件在`~/.cache/chatpilot/data/litellm/config.yaml`
 
 修改其内容如下：
@@ -127,7 +135,12 @@ model_list:
       api_base: https://api.deepseek.com/v1
       api_key: sk-xx
       rpm: 500
-
+  - model_name: openai/o1-mini
+    litellm_params: # all params accepted by litellm.completion() - https://docs.litellm.ai/docs/completion/input
+      model: o1-mini ### MODEL NAME sent to `litellm.completion()` ###
+      api_base: https://api.61798.cn/v1
+      api_key: sk-xxx
+      rpm: 500
 litellm_settings: # module level litellm settings - https://github.com/BerriAI/litellm/blob/main/litellm/__init__.py
   drop_params: True
   set_verbose: False
