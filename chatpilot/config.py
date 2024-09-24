@@ -65,20 +65,12 @@ Path(DOCS_DIR).mkdir(parents=True, exist_ok=True)
 
 
 def create_config_file(file_path):
-    directory = os.path.dirname(file_path)
-
-    # Check if directory exists, if not, create it
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
     # Data to write into the YAML file
     config_data = {
-        "general_settings": {},
-        "litellm_settings": {},
         "model_list": [],
-        "router_settings": {},
+        "litellm_settings": {}
     }
-
     # Write data to YAML file
     with open(file_path, "w", encoding='utf8') as file:
         yaml.dump(config_data, file)
@@ -89,7 +81,8 @@ LITELLM_CONFIG_PATH = f"{DATA_DIR}/litellm/config.yaml"
 if not os.path.exists(LITELLM_CONFIG_PATH):
     logger.debug("Config file doesn't exist. Creating...")
     create_config_file(LITELLM_CONFIG_PATH)
-    logger.info(f"LiteLLM Config file created successfully, path: {LITELLM_CONFIG_PATH}")
+    logger.info(f"LiteLLM Empty Config file created successfully, path: {LITELLM_CONFIG_PATH},"
+                f"Please add models to the config file and restart the server.")
 
 ####################################
 # OLLAMA_BASE_URL
