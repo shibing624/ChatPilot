@@ -110,7 +110,6 @@
 								console.log('done');
 							} else {
 								let data = JSON.parse(line.replace(/^data: /, ''));
-								console.log(data);
 
 								if ('request_id' in data) {
 									currentRequestId = data.request_id;
@@ -191,13 +190,13 @@
 
 					for (const line of lines) {
 						if (line !== '') {
-							console.log(line);
+							// console.log(line);
 							if (line === 'data: [DONE]') {
 								// responseMessage.done = true;
 								messages = messages;
 							} else {
 								let data = JSON.parse(line.replace(/^data: /, ''));
-								console.log(data);
+								// console.log(data);
 
 								if ('request_id' in data) {
 									currentRequestId = data.request_id;

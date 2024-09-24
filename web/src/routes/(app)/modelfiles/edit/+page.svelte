@@ -121,7 +121,7 @@
 							if (line !== '') {
 								console.log(line);
 								let data = JSON.parse(line);
-								console.log(data);
+								// console.log(data);
 
 								if (data.error) {
 									throw data.error;
