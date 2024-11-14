@@ -122,22 +122,22 @@ pip install litellm -U
 修改其内容如下：
 ```yaml
 model_list:
-#  - model_name: moonshot-v1-auto ### RECEIVED MODEL NAME ###
+#  - model_name: moonshot-v1-auto # show model name in the UI
 #    litellm_params: # all params accepted by litellm.completion() - https://docs.litellm.ai/docs/completion/input
-#      model: openai/moonshot-v1-auto ### MODEL NAME sent to `litellm.completion()` ###
+#      model: openai/moonshot-v1-auto # MODEL NAME sent to `litellm.completion()` #
 #      api_base: https://api.moonshot.cn/v1
 #      api_key: sk-xx
 #      rpm: 500      # [OPTIONAL] Rate limit for this deployment: in requests per minute (rpm)
 
-  - model_name: deepseek-ai/DeepSeek-Coder
+  - model_name: deepseek-ai/DeepSeek-Coder # show model name in the UI
     litellm_params: # all params accepted by litellm.completion() - https://docs.litellm.ai/docs/completion/input
-      model: openai/deepseek-coder ### MODEL NAME sent to `litellm.completion()` ###
+      model: openai/deepseek-coder # MODEL NAME sent to `litellm.completion()` #
       api_base: https://api.deepseek.com/v1
       api_key: sk-xx
       rpm: 500
-  - model_name: openai/o1-mini
+  - model_name: openai/o1-mini # show model name in the UI
     litellm_params: # all params accepted by litellm.completion() - https://docs.litellm.ai/docs/completion/input
-      model: o1-mini ### MODEL NAME sent to `litellm.completion()` ###
+      model: o1-mini # MODEL NAME sent to `litellm.completion()` #
       api_base: https://api.61798.cn/v1
       api_key: sk-xxx
       rpm: 500
