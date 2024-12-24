@@ -7,8 +7,7 @@ import sys
 import unittest
 
 sys.path.append('..')
-from chatpilot import AgenticaAssistant
-from chatpilot.config import DEEPSEEK_API_KEY, DEEPSEEK_API_BASE
+from chatpilot.agentica_agent import AgenticaAgent
 
 
 class DeepseekTestCase(unittest.TestCase):
@@ -33,7 +32,7 @@ class DeepseekTestCase(unittest.TestCase):
         print(response.choices[0].message.content)
 
         """
-        m = AgenticaAssistant(
+        m = AgenticaAgent(
             model_type='deepseek', model_name="deepseek-coder", enable_search_tool=True,
             enable_url_crawler_tool=True, enable_run_python_code_tool=True, verbose=True,
             add_chat_history_to_messages=False
@@ -43,7 +42,7 @@ class DeepseekTestCase(unittest.TestCase):
         i = "俄乌战争的最新进展?"
         print(i)
         r = m.stream_run(i)
-        print(r, "".join(r))
+        print(r)
         print("===")
 
         print(m.run("计算88888*4444.3=?"))

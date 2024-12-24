@@ -42,7 +42,7 @@
 	let stopResponseFlag = false;
 	let autoScroll = true;
 	let processing = '';
-	let messagesContainerElement: HTMLDivElement;
+	let messagesContainerElement;
 	let currentRequestId = null;
 
 	let selectedModels = [''];

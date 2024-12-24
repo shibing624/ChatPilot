@@ -11,7 +11,7 @@
 
 	let importFiles = '';
 	let query = '';
-	let promptsImportInputElement: HTMLInputElement;
+	let promptsImportInputElement;
 	const sharePrompt = async (prompt) => {
 		toast.success('Redirecting you to OpenWebUI Community');
 

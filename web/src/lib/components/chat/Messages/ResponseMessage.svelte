@@ -728,7 +728,7 @@
 														? 'visible'
 														: 'invisible group-hover:visible'} p-1 rounded dark:hover:text-white hover:text-black transition whitespace-pre-wrap"
 													on:click={() => {
-														//<!--console.log(message);-->
+														console.log(message);
 													}}
 													id="info-{message.id}"
 												>

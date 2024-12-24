@@ -20,7 +20,7 @@
 
 	let showLiteLLM = false;
 	let showLiteLLMParams = false;
-	let modelUploadInputElement: HTMLInputElement;
+	let modelUploadInputElement;
 	let liteLLMModelInfo = [];
 
 	let liteLLMModel = '';

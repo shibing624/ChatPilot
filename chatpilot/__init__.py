@@ -4,4 +4,4 @@
 @description: 
 """
 from chatpilot.version import __version__  # noqa
-from chatpilot.agentica_assistant import AgenticaAssistant
+from chatpilot.agentica_agent import AgenticaAgent

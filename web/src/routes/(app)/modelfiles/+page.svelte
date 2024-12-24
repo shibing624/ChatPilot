@@ -16,7 +16,7 @@
 
 	let localModelfiles = [];
 	let importFiles;
-	let modelfilesImportInputElement: HTMLInputElement;
+	let modelfilesImportInputElement;
 	const deleteModelHandler = async (tagName) => {
 		let success = null;
 

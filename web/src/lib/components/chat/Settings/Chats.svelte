@@ -22,7 +22,7 @@
 	let saveChatHistory = true;
 	let importFiles;
 	let showDeleteConfirm = false;
-	let chatImportInputElement: HTMLInputElement;
+	let chatImportInputElement;
 
 	$: if (importFiles) {
 		console.log(importFiles);

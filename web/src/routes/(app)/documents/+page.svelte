@@ -21,7 +21,7 @@
 
 	let inputFiles = '';
 	let query = '';
-	let documentsImportInputElement: HTMLInputElement;
+	let documentsImportInputElement;
 	let tags = [];
 
 	let showSettingsModal = false;

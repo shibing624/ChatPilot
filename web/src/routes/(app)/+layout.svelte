@@ -38,7 +38,7 @@
 
 	let ollamaVersion = '';
 	let loaded = false;
-	let showShortcutsButtonElement: HTMLButtonElement;
+	let showShortcutsButtonElement;
 	let DB = null;
 	let localDBChats = [];
 
@@ -67,7 +67,7 @@
 		return models;
 	};
 
-	const setOllamaVersion = async (version: string = '') => {
+	const setOllamaVersion = async (version = '') => {
 		if (version === '') {
 			version = await getOllamaVersion(localStorage.token).catch((error) => {
 				return '';

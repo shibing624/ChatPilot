@@ -19,7 +19,7 @@ echo "===================================="
 # 尝试杀掉之前的聊天服务器实例（如果存在）
 # 取消注释的行会杀掉名为 chatpilot 的进程
 # echo "Killing existing ChatPilot instances (if any)..."
-# ps -ef | grep "chatpilot" | grep -v "grep" | awk '{print $2}' | xargs kill -9
+ps -ef | grep "chatpilot" | grep -v "grep" | awk '{print $2}' | xargs kill -9
 
 # 启动 Gunicorn 服务器，绑定到指定端口
 echo "Starting Gunicorn server..."

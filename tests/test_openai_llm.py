@@ -8,13 +8,13 @@ import sys
 import unittest
 
 sys.path.append('..')
-from chatpilot import AgenticaAssistant
+from chatpilot import AgenticaAgent
 
 
 class BaseTestCase(unittest.TestCase):
 
     def test_tool_usage(self):
-        m = AgenticaAssistant(
+        m = AgenticaAgent(
             model_type='openai', model_name="gpt-4-turbo", enable_search_tool=True,
             enable_url_crawler_tool=True, enable_run_python_code_tool=True, verbose=True,
         )

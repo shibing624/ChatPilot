@@ -24,7 +24,7 @@
 	let show = false;
 	let navElement;
 
-	let title: string = 'UI';
+	let title = 'UI';
 	let search = '';
 
 	let chatDeleteId = null;

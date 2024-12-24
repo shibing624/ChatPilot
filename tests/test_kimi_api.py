@@ -7,12 +7,12 @@ import sys
 import unittest
 
 sys.path.append('..')
-from chatpilot import AgenticaAssistant
+from chatpilot import AgenticaAgent
 
 
 class KimiTestCase(unittest.TestCase):
     def test_tool_usage(self):
-        m = AgenticaAssistant(
+        m = AgenticaAgent(
             model_type='moonshot', model_name="moonshot-v1-8k", enable_search_tool=True,
             enable_url_crawler_tool=True, enable_run_python_code_tool=True, verbose=True,
         )

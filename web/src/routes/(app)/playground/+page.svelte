@@ -29,8 +29,8 @@
 	let currentRequestId = null;
 	let stopResponseFlag = false;
 
-	let messagesContainerElement: HTMLDivElement;
-	let textCompletionAreaElement: HTMLTextAreaElement;
+	let messagesContainerElement;
+	let textCompletionAreaElement;
 
 	let system = '';
 	let messages = [

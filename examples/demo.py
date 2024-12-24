@@ -6,11 +6,11 @@
 import sys
 
 sys.path.append('..')
-from chatpilot import AgenticaAssistant
+from chatpilot import AgenticaAgent
 
 if __name__ == '__main__':
     # LLM response
-    m = AgenticaAssistant(
+    m = AgenticaAgent(
         model_type='deepseek', model_name="deepseek-chat", enable_search_tool=False,
         enable_url_crawler_tool=False, enable_run_python_code_tool=False, verbose=True
     )
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     print(r, "".join(r))
 
     # Enable search tool, url crawler tool, run python code tool
-    m = AgenticaAssistant(
+    m = AgenticaAgent(
         model_type='azure', model_name="gpt-4o", enable_search_tool=True,
         enable_url_crawler_tool=True, enable_run_python_code_tool=True, verbose=True,
     )

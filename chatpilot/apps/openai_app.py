@@ -21,7 +21,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from loguru import logger
 from pydantic import BaseModel
 
-from chatpilot.agentica_assistant import AgenticaAssistant
+from chatpilot.agentica_agent import AgenticaAgent
 from chatpilot.apps.auth_utils import (
     get_current_user,
     get_admin_user,
@@ -395,11 +395,11 @@ async def proxy(
 
         # Init Agent when first request
         if app.state.AGENT is None:
-            chat_agent = AgenticaAssistant(model_type=MODEL_TYPE, model_name=model_name, system_prompt=system_prompt)
+            chat_agent = AgenticaAgent(model_type=MODEL_TYPE, model_name=model_name, system_prompt=system_prompt)
             app.state.AGENT = chat_agent
             logger.debug(chat_agent)
         elif app.state.MODEL_NAME != model_name:
-            chat_agent = AgenticaAssistant(model_type=MODEL_TYPE, model_name=model_name, system_prompt=system_prompt)
+            chat_agent = AgenticaAgent(model_type=MODEL_TYPE, model_name=model_name, system_prompt=system_prompt)
             app.state.AGENT = chat_agent
             app.state.MODEL_NAME = model_name
             logger.debug(chat_agent)
@@ -407,8 +407,8 @@ async def proxy(
             if history:
                 chat_agent = app.state.AGENT
             else:
-                chat_agent = AgenticaAssistant(model_type=MODEL_TYPE, model_name=model_name,
-                                               system_prompt=system_prompt)
+                chat_agent = AgenticaAgent(model_type=MODEL_TYPE, model_name=model_name,
+                                           system_prompt=system_prompt)
                 app.state.AGENT = chat_agent
         events = chat_agent.stream_run(user_question)
         created = int(time.time())
@@ -425,13 +425,13 @@ async def proxy(
                     "choices": [
                         {
                             "index": 0,
-                            "delta": {"content": event},
+                            "delta": {"content": event.get_content_as_string()},
                             "logprobs": None,
                             "finish_reason": None
                         }
                     ]
                 }
-                formatted_data = f"data: {json.dumps(data_structure)}\n\n"
+                formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n\n"
                 yield formatted_data.encode()
 
             formatted_data_done = f"data: [DONE]\n\n"

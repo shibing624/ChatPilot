@@ -15,7 +15,7 @@
 	let name = '';
 	let showJWTToken = false;
 	let JWTTokenCopied = false;
-	let profileImageInputElement: HTMLInputElement;
+	let profileImageInputElement;
 
 	const submitHandler = async () => {
 		const updatedUser = await updateUserProfile(localStorage.token, name, profileImageUrl).catch(

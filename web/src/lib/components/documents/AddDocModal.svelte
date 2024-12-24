@@ -15,7 +15,7 @@
 
 	export let show = false;
 	export let selectedDoc;
-	let uploadDocInputElement: HTMLInputElement;
+	let uploadDocInputElement;
 	let inputFiles;
 	let tags = [];
 
