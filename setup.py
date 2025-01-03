@@ -43,7 +43,7 @@ setup(
         "langchain~=0.1.11",
         "langchain-community~=0.0.27",
         "langchain-openai~=0.0.8",
-        "openai~=1.13.3",
+        "openai",
     ],
     packages=find_packages(exclude=['tests']),
     package_dir={'chatpilot': 'chatpilot'},
