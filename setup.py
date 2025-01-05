@@ -41,11 +41,9 @@ setup(
         "loguru",
         "tiktoken",
         "langchain~=0.1.11",
-        "langchain-community~=0.0.27",
-        "langchain-openai~=0.0.8",
         "openai",
     ],
     packages=find_packages(exclude=['tests']),
     package_dir={'chatpilot': 'chatpilot'},
-    package_data={'chatpilot': ['*.*', 'data/*.txt']}
+    package_data={'chatpilot': ['*.*']}
 )
