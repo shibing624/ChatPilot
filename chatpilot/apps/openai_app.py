@@ -411,32 +411,208 @@ async def proxy(
                                            system_prompt=system_prompt)
                 app.state.AGENT = chat_agent
         events = chat_agent.stream_run(user_question)
-        created = int(time.time())
 
-        def event_generator():
+        def event_generator1():
             """组装为OpenAI格式流式输出"""
+            event_content = ""
+            in_reasoning_start_phase = True
+            in_reasoning_end_phase = True
+            if events and len(list(events)) > 0 and list(events)[0].content.startswith("<think>"):
+                in_reasoning_start_phase = False
+                in_reasoning_end_phase = False
             for event in events:
-                data_structure = {
-                    "id": 'default_id',
-                    "object": "chat.completion.chunk",
-                    "created": created,
-                    "model": model_name,
-                    "system_fingerprint": '',
-                    "choices": [
-                        {
-                            "index": 0,
-                            "delta": {"content": event.get_content_as_string()},
-                            "logprobs": None,
-                            "finish_reason": None
+                created = int(time.time())
+                if event.reasoning_content:
+                    if in_reasoning_start_phase:
+                        in_reasoning_start_phase = False
+                        event_content = "<think>"
+                        data_structure = {
+                            "id": 'default_id',
+                            "object": "chat.completion.chunk",
+                            "created": created,
+                            "model": model_name,
+                            "system_fingerprint": '',
+                            "choices": [
+                                {
+                                    "index": 0,
+                                    "delta": {"content": event_content},
+                                    "logprobs": None,
+                                    "finish_reason": None
+                                }
+                            ]
                         }
-                    ]
-                }
-                formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n\n"
-                yield formatted_data.encode()
+                        formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n\n"
+                        yield formatted_data.encode()
+
+                    event_content = event.reasoning_content
+                    data_structure = {
+                        "id": 'default_id',
+                        "object": "chat.completion.chunk",
+                        "created": created,
+                        "model": model_name,
+                        "system_fingerprint": '',
+                        "choices": [
+                            {
+                                "index": 0,
+                                "delta": {"content": event_content},
+                                "logprobs": None,
+                                "finish_reason": None
+                            }
+                        ]
+                    }
+                    formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n\n"
+                    yield formatted_data.encode()
+
+                if event.content:
+                    if in_reasoning_end_phase:
+                        in_reasoning_end_phase = False
+                        event_content = "</think>"
+                        data_structure = {
+                            "id": 'default_id',
+                            "object": "chat.completion.chunk",
+                            "created": created,
+                            "model": model_name,
+                            "system_fingerprint": '',
+                            "choices": [
+                                {
+                                    "index": 0,
+                                    "delta": {"content": event_content},
+                                    "logprobs": None,
+                                    "finish_reason": None
+                                }
+                            ]
+                        }
+                        formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n\n"
+                        yield formatted_data.encode()
+
+                    event_content = event.get_content_as_string()
+                    data_structure = {
+                        "id": 'default_id',
+                        "object": "chat.completion.chunk",
+                        "created": created,
+                        "model": model_name,
+                        "system_fingerprint": '',
+                        "choices": [
+                            {
+                                "index": 0,
+                                "delta": {"content": event_content},
+                                "logprobs": None,
+                                "finish_reason": None
+                            }
+                        ]
+                    }
+                    formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n\n"
+                    yield formatted_data.encode()
 
             formatted_data_done = f"data: [DONE]\n\n"
             yield formatted_data_done.encode()
 
+        def event_generator():
+            """组装为OpenAI格式流式输出"""
+            created = int(time.time())
+            reasoning_buffer = ""  # 用于累积思考内容
+            content_buffer = ""  # 用于累积实际回答内容
+            in_reasoning_phase = True  # 初始状态是思考阶段
+            thinking_tag_sent = False  # 是否已发送思考开始标记
+            thinking_end_tag_sent = False  # 是否已发送思考结束标记
+
+            for event in events:
+                if event is None:
+                    continue
+
+                # 处理思考过程
+                if event.reasoning_content and in_reasoning_phase:
+                    # 发送思考开始标记（仅一次）
+                    if not thinking_tag_sent:
+                        thinking_tag_sent = True
+                        data_structure = {
+                            "id": 'default_id',
+                            "object": "chat.completion.chunk",
+                            "created": created,
+                            "model": model_name,
+                            "system_fingerprint": '',
+                            "choices": [
+                                {
+                                    "index": 0,
+                                    "delta": {"content": "<think>"},
+                                    "logprobs": None,
+                                    "finish_reason": None
+                                }
+                            ]
+                        }
+                        formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n\n"
+                        # logger.info(formatted_data)
+                        yield formatted_data.encode()
+
+                    if event.reasoning_content:
+                        data_structure = {
+                            "id": 'default_id',
+                            "object": "chat.completion.chunk",
+                            "created": created,
+                            "model": model_name,
+                            "system_fingerprint": '',
+                            "choices": [
+                                {
+                                    "index": 0,
+                                    "delta": {"content": event.reasoning_content},
+                                    "logprobs": None,
+                                    "finish_reason": None
+                                }
+                            ]
+                        }
+                        formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n\n"
+                        # logger.info(formatted_data)
+                        yield formatted_data.encode()
+
+                # 当出现实际内容时，结束思考阶段并输出思考结束标记
+                if event.content:
+                    if in_reasoning_phase and thinking_tag_sent and not thinking_end_tag_sent:
+                        # 输出思考结束标记（仅一次）
+                        in_reasoning_phase = False
+                        thinking_end_tag_sent = True
+
+                        data_structure = {
+                            "id": 'default_id',
+                            "object": "chat.completion.chunk",
+                            "created": created,
+                            "model": model_name,
+                            "system_fingerprint": '',
+                            "choices": [
+                                {
+                                    "index": 0,
+                                    "delta": {"content": "</think>"},
+                                    "logprobs": None,
+                                    "finish_reason": None
+                                }
+                            ]
+                        }
+                        formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n\n"
+                        # logger.info(formatted_data)
+                        yield formatted_data.encode()
+
+                    delta_content = event.get_content_as_string()
+                    if delta_content:
+                        data_structure = {
+                            "id": 'default_id',
+                            "object": "chat.completion.chunk",
+                            "created": created,
+                            "model": model_name,
+                            "system_fingerprint": '',
+                            "choices": [
+                                {
+                                    "index": 0,
+                                    "delta": {"content": delta_content},
+                                    "logprobs": None,
+                                    "finish_reason": None
+                                }
+                            ]
+                        }
+                        formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n\n"
+                        # logger.info(formatted_data)
+                        yield formatted_data.encode()
+
+            formatted_data_done = f"data: [DONE]\n\n"
+            yield formatted_data_done.encode()
         return StreamingResponse(event_generator(), media_type='text/event-stream')
     except Exception as e:
         logger.error(e)
