@@ -87,8 +87,8 @@ class AgenticaAgent:
                 description=system_prompt,
                 add_datetime_to_instructions=True,
                 add_history_to_messages=add_chat_history_to_messages,
-                show_tool_calls=True,
-                read_chat_history=True,
+                # show_tool_calls=True,
+                # read_chat_history=True,
                 debug_mode=verbose,
             )
         else:
@@ -98,8 +98,8 @@ class AgenticaAgent:
                 description=system_prompt,
                 add_datetime_to_instructions=True,
                 add_history_to_messages=add_chat_history_to_messages,
-                show_tool_calls=True,
-                read_chat_history=True,
+                # show_tool_calls=True,
+                # read_chat_history=True,
                 debug_mode=verbose,
             )
         self.verbose = verbose

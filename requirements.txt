@@ -48,3 +48,7 @@ openpyxl
 # jwt
 PyJWT
 pyjwt[crypto]
+
+pydantic[email]
+fastapi-sso
+
