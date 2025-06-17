@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @author:XuMing(xuming624@qq.com)
-@description: 
+@description:
 """
 import asyncio
 import hashlib
@@ -534,13 +534,13 @@ async def proxy(
                             "choices": [
                                 {
                                     "index": 0,
-                                    "delta": {"content": "<think>"},
+                                    "delta": {"content": "```\n"},
                                     "logprobs": None,
                                     "finish_reason": None
                                 }
                             ]
                         }
-                        formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n\n"
+                        formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n"
                         # logger.info(formatted_data)
                         yield formatted_data.encode()
 
@@ -560,7 +560,7 @@ async def proxy(
                                 }
                             ]
                         }
-                        formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n\n"
+                        formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n"
                         # logger.info(formatted_data)
                         yield formatted_data.encode()
 
@@ -580,13 +580,13 @@ async def proxy(
                             "choices": [
                                 {
                                     "index": 0,
-                                    "delta": {"content": "</think>"},
+                                    "delta": {"content": "```\n"},
                                     "logprobs": None,
                                     "finish_reason": None
                                 }
                             ]
                         }
-                        formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n\n"
+                        formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n"
                         # logger.info(formatted_data)
                         yield formatted_data.encode()
 
@@ -607,12 +607,13 @@ async def proxy(
                                 }
                             ]
                         }
-                        formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n\n"
+                        formatted_data = f"data: {json.dumps(data_structure, ensure_ascii=False)}\n"
                         # logger.info(formatted_data)
                         yield formatted_data.encode()
 
             formatted_data_done = f"data: [DONE]\n\n"
             yield formatted_data_done.encode()
+
         return StreamingResponse(event_generator(), media_type='text/event-stream')
     except Exception as e:
         logger.error(e)
