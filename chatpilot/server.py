@@ -150,7 +150,7 @@ async def on_startup():
 app.mount("/api/v1", webui_app)
 app.mount("/litellm/api", litellm_app)
 # app.mount("/dashscope/api", dashscope_app)
-app.mount("/ollama", ollama_app)
+# app.mount("/ollama", ollama_app)
 app.mount("/openai/api", openai_app)
 app.mount("/images/api/v1", images_app)
 app.mount("/audio/api/v1", audio_app)

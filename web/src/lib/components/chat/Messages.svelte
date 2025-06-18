@@ -27,16 +27,63 @@
 
 	export let selectedModelfiles = [];
 
-	$: if (autoScroll && bottomPadding) {
-		(async () => {
-			await tick();
-			scrollToBottom();
-		})();
+	let messagesContainer;
+	const SCROLL_OFFSET = 120;
+
+	// 改进的滚动函数
+	function smoothScrollToMessage(element, immediate = false) {
+		if (!element) return;
+		
+		const headerHeight = 60;
+		const targetPosition = element.getBoundingClientRect().top + window.pageYOffset - headerHeight - SCROLL_OFFSET;
+		
+		window.scrollTo({
+			top: Math.max(0, targetPosition),
+			behavior: immediate ? 'auto' : 'smooth'
+		});
+	}
+
+	// 监听消息变化
+	$: if (messages) {
+		tick().then(() => {
+			const latestMessage = document.querySelector('.message-' + messages[messages.length - 1]?.id);
+			if (latestMessage) {
+				const isUserMessage = messages[messages.length - 1]?.role === 'user';
+				// 如果是用户消息，立即滚动到顶部
+				if (isUserMessage) {
+					window.scrollTo({ top: 0, behavior: 'auto' });
+				} else {
+					// 如果是模型回答，平滑滚动到消息位置
+					smoothScrollToMessage(latestMessage);
+				}
+			}
+		});
+	}
+
+	// 监听新消息添加
+	let previousMessagesLength = 0;
+	$: if (messages.length > previousMessagesLength) {
+		previousMessagesLength = messages.length;
+		tick().then(() => {
+			const latestMessage = document.querySelector('.message-' + messages[messages.length - 1]?.id);
+			if (latestMessage) {
+				const isUserMessage = messages[messages.length - 1]?.role === 'user';
+				// 如果是用户消息，立即滚动到顶部
+				if (isUserMessage) {
+					window.scrollTo({ top: 0, behavior: 'auto' });
+				} else {
+					// 如果是模型回答，平滑滚动到消息位置
+					smoothScrollToMessage(latestMessage);
+				}
+			}
+		});
 	}
 
 	const scrollToBottom = () => {
 		const element = document.getElementById('messages-container');
-		element.scrollTop = element.scrollHeight;
+		if (element) {
+			element.scrollTop = element.scrollHeight;
+		}
 	};
 
 	const copyToClipboard = (text) => {
