@@ -1,7 +1,7 @@
 <script lang="ts">
 	import dayjs from 'dayjs';
 
-	import { tick, createEventDispatcher } from 'svelte';
+	import { tick, createEventDispatcher, onMount } from 'svelte';
 	import Name from './Name.svelte';
 	import ProfileImage from './ProfileImage.svelte';
 	import { modelfiles, settings } from '$lib/stores';
@@ -22,6 +22,37 @@
 	let edit = false;
 	let editedContent = '';
 	let messageEditTextAreaElement: HTMLTextAreaElement;
+	let messageElement;
+
+	function smoothScrollToElement(element, offset = SCROLL_OFFSET) {
+		if (!element) return;
+		
+		const headerHeight = 60;
+		const targetPosition = element.getBoundingClientRect().top + window.pageYOffset - headerHeight - offset;
+		
+		window.scrollTo({
+			top: Math.max(0, targetPosition),
+			behavior: 'smooth'
+		});
+	}
+
+	// 监听消息变化
+	$: if (message && messageElement) {
+		// 当消息内容更新时，触发滚动
+		setTimeout(() => {
+			smoothScrollToElement(messageElement);
+		}, 100);
+	}
+
+	onMount(() => {
+		if (messageElement) {
+			// 确保新消息总是滚动到顶部
+			setTimeout(() => {
+				smoothScrollToElement(messageElement);
+			}, 100);
+		}
+	});
+
 	const editMessageHandler = async () => {
 		edit = true;
 		editedContent = message.content;
@@ -51,7 +82,7 @@
 	};
 </script>
 
-<div class=" flex w-full">
+<div class="flex w-full message-{message.id}" bind:this={messageElement}>
 	<ProfileImage
 		src={message.user
 			? $modelfiles.find((modelfile) => modelfile.tagName === message.user)?.imageUrl ?? '/user.png'
