@@ -55,6 +55,7 @@
 		"marked": "^9.1.0",
 		"svelte-sonner": "^0.3.19",
 		"tippy.js": "^6.3.7",
+		"lucide-svelte": "^0.516.0",
 		"uuid": "^9.0.1"
 	},
 	"engines": {
