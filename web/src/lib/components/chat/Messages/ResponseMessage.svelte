@@ -64,9 +64,9 @@
 	let messageElement;
 	let lastContentLength = 0;
 	let tokens = [];
+	let renderedContent = '';
 
-	// 解析 markdown 内容为 tokens
-	const parseMarkdownToTokens = (content) => {
+	const parseCodeBlocks = (content) => {
 		if (!content) return [];
 
 		const tokens = [];
@@ -145,9 +145,13 @@
 			finalContent = content;
 			thinkCompleted = false;
 		}
+		renderedContent = finalContent;
 
-		// 解析最终内容为 tokens
-		tokens = parseMarkdownToTokens(finalContent);
+		if (message.done) {
+			tokens = parseCodeBlocks(finalContent);
+		} else {
+			tokens = [];
+		}
 
 		if (message.content) {
 			const currentLength = message.content.length;
@@ -544,18 +548,27 @@
 									</details>
 								{/if}
 
-								{#each tokens as token}
-									{#if token.type === 'code'}
-										<CodeBlock lang={token.lang} code={token.text} />
-									{:else}
-										{@html marked.parse(token.raw, {
-											...defaults,
-											gfm: true,
-											breaks: true,
-											renderer
-										})}
-									{/if}
-								{/each}
+								{#if message.done && tokens.length > 0}
+									{#each tokens as token}
+										{#if token.type === 'code'}
+											<CodeBlock lang={token.lang} code={token.text} />
+										{:else}
+											{@html marked.parse(token.raw, {
+												...defaults,
+												gfm: true,
+												breaks: true,
+												renderer
+											})}
+										{/if}
+									{/each}
+								{:else}
+									{@html marked.parse(renderedContent.replaceAll('\\', '\\\\'), {
+										...defaults,
+										gfm: true,
+										breaks: true,
+										renderer
+									})}
+								{/if}
 							{/if}
 						</div>
 					{/if}
