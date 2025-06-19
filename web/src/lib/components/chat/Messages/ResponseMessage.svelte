@@ -54,6 +54,7 @@
 	let generatingImage = false;
 
 	let renderedLatex = false;
+	let copied = false;
 
 	let thinkingContent = '';
 	let finalContent = '';
@@ -62,6 +63,64 @@
 
 	let messageElement;
 	let lastContentLength = 0;
+	let tokens = [];
+
+	// 解析 markdown 内容为 tokens
+	const parseMarkdownToTokens = (content) => {
+		if (!content) return [];
+
+		const tokens = [];
+		const codeBlockRegex = /```(\w*)\n?([\s\S]*?)```/g;
+		let lastIndex = 0;
+		let match;
+
+		while ((match = codeBlockRegex.exec(content)) !== null) {
+			// 添加代码块前的文本
+			if (match.index > lastIndex) {
+				const textContent = content.substring(lastIndex, match.index);
+				if (textContent.trim()) {
+					tokens.push({
+						type: 'text',
+						raw: textContent,
+						text: textContent
+					});
+				}
+			}
+
+			// 添加代码块
+			tokens.push({
+				type: 'code',
+				lang: match[1] || '',
+				text: match[2] || '',
+				raw: match[0]
+			});
+
+			lastIndex = match.index + match[0].length;
+		}
+
+		// 添加最后剩余的文本
+		if (lastIndex < content.length) {
+			const textContent = content.substring(lastIndex);
+			if (textContent.trim()) {
+				tokens.push({
+					type: 'text',
+					raw: textContent,
+					text: textContent
+				});
+			}
+		}
+
+		// 如果没有找到代码块，整个内容作为文本
+		if (tokens.length === 0 && content.trim()) {
+			tokens.push({
+				type: 'text',
+				raw: content,
+				text: content
+			});
+		}
+
+		return tokens;
+	};
 
 	$: {
 		let content = message.content;
@@ -86,6 +145,9 @@
 			finalContent = content;
 			thinkCompleted = false;
 		}
+
+		// 解析最终内容为 tokens
+		tokens = parseMarkdownToTokens(finalContent);
 
 		if (message.content) {
 			const currentLength = message.content.length;
@@ -319,6 +381,15 @@
 		renderStyling();
 	};
 
+	const copyMessageToClipboard = async (text) => {
+		copied = true;
+		await copyToClipboard(text);
+
+		setTimeout(() => {
+			copied = false;
+		}, 1000);
+	};
+
 	const generateImage = async (message) => {
 		generatingImage = true;
 		const res = await imageGenerations(localStorage.token, message.content).catch((error) => {
@@ -396,27 +467,97 @@
 				<div
 					class="prose chat-{message.role} w-full max-w-full dark:prose-invert prose-headings:my-0 prose-p:m-0 prose-p:-mb-6 prose-pre:my-0 prose-table:my-0 prose-blockquote:my-0 prose-img:my-0 prose-ul:-my-4 prose-ol:-my-4 prose-li:-my-3 prose-ul:-mb-6 prose-ol:-mb-8 prose-ol:p-0 prose-li:-mb-4 whitespace-pre-line"
 				>
-					{#if thinkCompleted}
-						<details class="mb-4 text-sm" bind:open={isOpen}>
-							<summary class="flex items-center space-x-2 text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300">
-								{#if isOpen}
-									<ChevronDown class="w-5 h-5" />
-								{:else}
-									<ChevronRight class="w-5 h-5" />
-								{/if}
-								<span class="font-medium">Reasoning</span>
-							</summary>
-							<div
-								class="mt-2 p-3 border-l-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 rounded-r-lg prose dark:prose-invert max-w-full"
-							>
-								{@html marked.parse(thinkingContent, { ...defaults, renderer: renderer })}
+					{#if edit === true}
+						<div class=" w-full">
+							<textarea
+								id="message-edit-{message.id}"
+								bind:this={editTextAreaElement}
+								class=" bg-transparent outline-none w-full resize-none"
+								bind:value={editedContent}
+								on:input={(e) => {
+									e.target.style.height = '';
+									e.target.style.height = `${e.target.scrollHeight}px`;
+								}}
+							/>
+
+							<div class=" mt-2 mb-1 flex justify-center space-x-2 text-sm font-medium">
+								<button
+									class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-gray-100 transition rounded-lg"
+									on:click={() => {
+										editMessageConfirmHandler();
+									}}
+								>
+									Save
+								</button>
+
+								<button
+									class=" px-4 py-2 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-100 transition outline outline-1 outline-gray-200 dark:outline-gray-600 rounded-lg"
+									on:click={() => {
+										cancelEditMessage();
+									}}
+								>
+									Cancel
+								</button>
 							</div>
-						</details>
-						<div class="prose dark:prose-invert max-w-full">
-							{@html marked.parse(finalContent, { ...defaults, renderer: renderer })}
 						</div>
 					{:else}
-						{@html marked.parse(finalContent, { ...defaults, renderer: renderer })}
+						<div class="w-full">
+							{#if message?.error === true}
+								<div
+									class="flex mt-2 mb-4 space-x-2 border px-4 py-3 border-red-800 bg-red-800/30 font-medium rounded-lg"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke-width="1.5"
+										stroke="currentColor"
+										class="w-5 h-5 self-center"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+										/>
+									</svg>
+
+									<div class=" self-center">
+										{message.content}
+									</div>
+								</div>
+							{:else}
+								{#if thinkCompleted}
+									<details class="mb-4 text-sm" bind:open={isOpen}>
+										<summary class="flex items-center space-x-2 text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300">
+											{#if isOpen}
+												<ChevronDown class="w-5 h-5" />
+											{:else}
+												<ChevronRight class="w-5 h-5" />
+											{/if}
+											<span class="font-medium">Reasoning</span>
+										</summary>
+										<div
+											class="mt-2 p-3 border-l-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 rounded-r-lg prose dark:prose-invert max-w-full"
+										>
+											{@html marked.parse(thinkingContent, { ...defaults, renderer: renderer })}
+										</div>
+									</details>
+								{/if}
+
+								{#each tokens as token}
+									{#if token.type === 'code'}
+										<CodeBlock lang={token.lang} code={token.text} />
+									{:else}
+										{@html marked.parse(token.raw, {
+											...defaults,
+											gfm: true,
+											breaks: true,
+											renderer
+										})}
+									{/if}
+								{/each}
+							{/if}
+						</div>
 					{/if}
 				</div>
 
@@ -498,29 +639,46 @@
 							</button>
 						</Tooltip>
 
-						<Tooltip content="Copy" placement="bottom">
+						<Tooltip content={copied ? "Copied!" : "Copy"} placement="bottom">
 							<button
 								class="{isLastMessage
 									? 'visible'
-									: 'invisible group-hover:visible'} p-1 rounded dark:hover:text-white hover:text-black transition copy-response-button"
+									: 'invisible group-hover:visible'} p-1 rounded dark:hover:text-white hover:text-black transition copy-response-button {copied ? 'text-green-600 dark:text-green-400' : ''}"
 								on:click={() => {
-									copyToClipboard(message.content);
+									copyMessageToClipboard(message.content);
 								}}
 							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke-width="2"
-									stroke="currentColor"
-									class="w-4 h-4"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
-									/>
-								</svg>
+								{#if copied}
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke-width="2"
+										stroke="currentColor"
+										class="w-4 h-4"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M4.5 12.75l6 6 9-13.5"
+										/>
+									</svg>
+								{:else}
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke-width="2"
+										stroke="currentColor"
+										class="w-4 h-4"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
+										/>
+									</svg>
+								{/if}
 							</button>
 						</Tooltip>
 
