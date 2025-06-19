@@ -184,7 +184,7 @@ cython_debug/
 .pnp.*
 web/.svelte-kit/
 web/.svelte-kit
-# web/build
 web/node_modules
 web/.yarn
 build
+web/build
