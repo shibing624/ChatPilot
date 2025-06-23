@@ -5,7 +5,7 @@
 """
 from typing import Optional
 
-from agentica import PythonAgent, AzureOpenAIChat, OpenAIChat, Agent, MoonshotChat, DeepSeekChat
+from agentica import PythonAgent, AzureOpenAIChat, OpenAIChat, Agent, MoonshotChat, DeepSeekChat, Doubao
 from agentica.tools.search_serper_tool import SearchSerperTool
 from agentica.tools.url_crawler_tool import UrlCrawlerTool
 
@@ -27,6 +27,8 @@ class AgenticaAgent:
             system_prompt: Optional[str] = None,
             verbose: Optional[bool] = False,
             add_chat_history_to_messages: Optional[bool] = True,
+            num_history_responses: Optional[int] = 3,
+            support_tool_calls: Optional[bool] = True,
             **kwargs
     ):
         """
@@ -62,6 +64,11 @@ class AgenticaAgent:
                 id=model_name,
                 **kwargs
             )
+        elif model_type == "doubao":
+            self.llm = Doubao(
+                id=model_name,
+                **kwargs
+            )
         else:
             raise ValueError(f"Unsupported model type: {model_type}")
         self.model_type = model_type
@@ -87,9 +94,9 @@ class AgenticaAgent:
                 description=system_prompt,
                 add_datetime_to_instructions=True,
                 add_history_to_messages=add_chat_history_to_messages,
-                # show_tool_calls=True,
-                # read_chat_history=True,
                 debug_mode=verbose,
+                num_history_responses=num_history_responses,
+                support_tool_calls=True,
             )
         else:
             self.model = Agent(
@@ -98,9 +105,9 @@ class AgenticaAgent:
                 description=system_prompt,
                 add_datetime_to_instructions=True,
                 add_history_to_messages=add_chat_history_to_messages,
-                # show_tool_calls=True,
-                # read_chat_history=True,
                 debug_mode=verbose,
+                num_history_responses=num_history_responses,
+                support_tool_calls=support_tool_calls,
             )
         self.verbose = verbose
 
