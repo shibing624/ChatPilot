@@ -231,24 +231,40 @@ def merge_models_lists(model_lists):
 
 async def get_all_models():
     logger.debug(f"model_type: {MODEL_TYPE}, base url: {app.state.OPENAI_BASE_URL}")
-    if MODEL_TYPE == 'azure':
-        models = {"data": [
-            {"id": m, "name": m, "urlIdx": i} for i, m in enumerate(DEFAULT_MODELS)
-        ]}
+
+    # 初始化包含DEFAULT_MODELS的模型列表
+    default_models_data = [
+        {"id": m, "name": m, "urlIdx": i} for i, m in enumerate(list(set(DEFAULT_MODELS)))
+    ]
+
+    if not app.state.OPENAI_API_KEY:
+        models = {"data": default_models_data}
     else:
-        if not app.state.OPENAI_API_KEY:
-            models = {"data": []}
+        tasks = [fetch_url(f"{app.state.OPENAI_BASE_URL}/models", app.state.OPENAI_API_KEY)]
+        responses = await asyncio.gather(*tasks)
+        responses = list(
+            filter(lambda x: x is not None and "error" not in x, responses)
+        )
+
+        if not responses:
+            models = {"data": default_models_data}
         else:
-            tasks = [fetch_url(f"{app.state.OPENAI_BASE_URL}/models", app.state.OPENAI_API_KEY)]
-            responses = await asyncio.gather(*tasks)
-            responses = list(
-                filter(lambda x: x is not None and "error" not in x, responses)
+            # 获取API返回的模型列表
+            fetched_models = merge_models_lists(
+                list(map(lambda response: response["data"], responses))
             )
-            models = {
-                "data": merge_models_lists(
-                    list(map(lambda response: response["data"], responses))
-                )
-            }
+
+            # 创建一个模型ID到模型的映射
+            model_map = {model["id"]: model for model in fetched_models}
+
+            # 确保DEFAULT_MODELS中的所有模型都在结果中，并保持原有的urlIdx
+            for default_model in default_models_data:
+                model_id = default_model["id"]
+                if model_id not in model_map:
+                    model_map[model_id] = default_model
+
+            models = {"data": list(model_map.values())}
+
     app.state.MODELS = {model["id"]: model for model in models["data"]}
     logger.debug(f"get_all_models done, size: {len(app.state.MODELS)}, {app.state.MODELS.keys()}")
     return models
