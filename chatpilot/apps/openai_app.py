@@ -393,13 +393,19 @@ async def proxy(
         if messages and messages[-1]["role"] == "user":
             user_question = messages[-1]["content"]
 
+        agent_params = {
+            "model_type": MODEL_TYPE,
+            "model_name": model_name,
+            "system_prompt": system_prompt,
+            "temperature": temperature,
+        }
         # Init Agent when first request
         if app.state.AGENT is None:
-            chat_agent = AgenticaAgent(model_type=MODEL_TYPE, model_name=model_name, system_prompt=system_prompt)
+            chat_agent = AgenticaAgent(**agent_params)
             app.state.AGENT = chat_agent
             logger.debug(chat_agent)
         elif app.state.MODEL_NAME != model_name:
-            chat_agent = AgenticaAgent(model_type=MODEL_TYPE, model_name=model_name, system_prompt=system_prompt)
+            chat_agent = AgenticaAgent(**agent_params)
             app.state.AGENT = chat_agent
             app.state.MODEL_NAME = model_name
             logger.debug(chat_agent)
@@ -407,8 +413,7 @@ async def proxy(
             if history:
                 chat_agent = app.state.AGENT
             else:
-                chat_agent = AgenticaAgent(model_type=MODEL_TYPE, model_name=model_name,
-                                           system_prompt=system_prompt)
+                chat_agent = AgenticaAgent(**agent_params)
                 app.state.AGENT = chat_agent
         events = chat_agent.stream_run(user_question)
 
