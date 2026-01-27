@@ -23,12 +23,16 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def verify_password(plain_password, hashed_password):
+    # bcrypt has a 72-byte limit, truncate if necessary
+    plain_password = plain_password[:72] if plain_password else plain_password
     return (
         pwd_context.verify(plain_password, hashed_password) if hashed_password else None
     )
 
 
 def get_password_hash(password):
+    # bcrypt has a 72-byte limit, truncate if necessary
+    password = password[:72] if password else password
     return pwd_context.hash(password)
 
 
