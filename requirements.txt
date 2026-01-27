@@ -13,6 +13,7 @@ chromadb
 agentica
 langchain
 langchain_community
+langchain_text_splitters
 dashscope
 
 # serve

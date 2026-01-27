@@ -7,7 +7,7 @@ import re
 from typing import List, Optional, Any, Iterable
 
 import chromadb
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from loguru import logger
 
