@@ -27,6 +27,8 @@ DATA_DIR = str(os.path.expanduser(os.getenv("DATA_DIR", "data")))
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
 DB_PATH = f"{DATA_DIR}/web.db"
+print(f"DB_PATH: {DB_PATH}")
+
 ENV = os.getenv("ENV", "dev")
 # Frontend build dir, which is npm build dir
 FRONTEND_BUILD_DIR = str(Path(os.getenv("FRONTEND_BUILD_DIR", os.path.join(pwd_path, "../web/build"))))
