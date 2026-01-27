@@ -5,9 +5,10 @@
 """
 from typing import Optional
 
-from agentica import PythonAgent, AzureOpenAIChat, OpenAIChat, Agent, MoonshotChat, DeepSeekChat, Doubao
+from agentica import Agent, AzureOpenAIChat, OpenAIChat, Agent, MoonshotChat, DeepSeekChat, Doubao
 from agentica.tools.search_serper_tool import SearchSerperTool
 from agentica.tools.url_crawler_tool import UrlCrawlerTool
+from agentica.tools.run_python_code_tool import RunPythonCodeTool
 
 from chatpilot.config import (
     ENABLE_SEARCH_TOOL,
@@ -88,27 +89,17 @@ class AgenticaAgent:
         if enable_url_crawler_tool:
             self.tools.append(UrlCrawlerTool())
         if enable_run_python_code_tool:
-            self.model = PythonAgent(
-                model=self.llm,
-                tools=self.tools,
-                description=system_prompt,
-                add_datetime_to_instructions=True,
-                add_history_to_messages=add_chat_history_to_messages,
-                debug_mode=verbose,
-                num_history_responses=num_history_responses,
-                support_tool_calls=True,
-            )
-        else:
-            self.model = Agent(
-                model=self.llm,
-                tools=self.tools,
-                description=system_prompt,
-                add_datetime_to_instructions=True,
-                add_history_to_messages=add_chat_history_to_messages,
-                debug_mode=verbose,
-                num_history_responses=num_history_responses,
-                support_tool_calls=support_tool_calls,
-            )
+            self.tools.append(RunPythonCodeTool())
+        self.model = Agent(
+            model=self.llm,
+            tools=self.tools,
+            description=system_prompt,
+            add_datetime_to_instructions=True,
+            add_history_to_messages=add_chat_history_to_messages,
+            debug_mode=verbose,
+            num_history_responses=num_history_responses,
+            support_tool_calls=support_tool_calls,
+        )
         self.verbose = verbose
 
     def __repr__(self):

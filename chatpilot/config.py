@@ -23,7 +23,7 @@ if load_dotenv(CHATPILOT_DOTENV_PATH, override=True):
 else:
     logger.warning(f"Environment variables file not found: {CHATPILOT_DOTENV_PATH}")
 
-DATA_DIR = str(os.path.expanduser(os.getenv("DATA_DIR", "~/.cache/chatpilot/data")))
+DATA_DIR = str(os.path.expanduser(os.getenv("DATA_DIR", "data")))
 DB_PATH = f"{DATA_DIR}/web.db"
 ENV = os.getenv("ENV", "dev")
 # Frontend build dir, which is npm build dir
